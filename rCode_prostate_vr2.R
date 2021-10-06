@@ -116,7 +116,7 @@ View(toxicityFiltered)
 toxicity_summaryStats <- toxicityFiltered %>%
   select(maxUrinaryFrequency, maxNocturia, maxUrinaryUrgency, maxHematuria, maxUrinaryIncontenence, maxDecreasedUrinaryStream, maxDysuria, maxGastrointenstinalIncontenence, maxDiarrhoea, maxGastrointenstinalUrgency, maxTenesmus, maxGastrointestinalPain, maxRectalMucus, maxConstipation)
 
-view(dfSummary(toxicity_summaryStats))
+stview(dfSummary(toxicity_summaryStats))
 
 
 ### calculated the STAT for each patient
@@ -293,8 +293,12 @@ t <- glm(log(STAT)~wprs, data = STAT_prs_factors)
 summary(t)
 
 #### smoker 
-t <- glm(STAT~wprs + Country + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+## country
+t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
 summary(t) 
+tt <- exp(cbind(OR = coef(t), confint(t)))
+tt
+
 t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
 AIC(t)
@@ -443,8 +447,8 @@ tapply(STAT_prs_factors$wprs, STAT_prs_factors$ra, summary)
 tapply(STAT_prs_factors$prs, STAT_prs_factors$ra, summary)
 
 STAT_prs_factors$ra <- as.factor(STAT_prs_factors$ra)
-ggplot(STAT_prs_factors, aes(x = ra, y = wprs)) + 
-  geom_boxplot() + 
+ggplot(STAT_prs_factors, aes(x = ra, y = wprs, fill = ra)) + 
+  geom_boxplot(notch = TRUE) + 
   theme_classic() +
   stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
 

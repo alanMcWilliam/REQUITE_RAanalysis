@@ -258,9 +258,10 @@ confint(t, level = 0.95)
 
 
 #### smoker 
-t <- glm(STAT~wprs + Country + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+##Country
+t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = CRO_STAT_prs_factors)
 summary(t) 
-t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = CRO_STAT_prs_factors)
 summary(t) 
 AIC(t)
 
