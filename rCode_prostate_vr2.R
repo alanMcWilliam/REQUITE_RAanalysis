@@ -116,7 +116,7 @@ View(toxicityFiltered)
 toxicity_summaryStats <- toxicityFiltered %>%
   select(maxUrinaryFrequency, maxNocturia, maxUrinaryUrgency, maxHematuria, maxUrinaryIncontenence, maxDecreasedUrinaryStream, maxDysuria, maxGastrointenstinalIncontenence, maxDiarrhoea, maxGastrointenstinalUrgency, maxTenesmus, maxGastrointestinalPain, maxRectalMucus, maxConstipation)
 
-view(dfSummary(toxicity_summaryStats))
+stview(dfSummary(toxicity_summaryStats))
 
 
 ### calculated the STAT for each patient

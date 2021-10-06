@@ -58,8 +58,6 @@ radiotherapyStart <- prosTreat %>%
 
 PRO <- prosPRO %>%
   select(SubjectId, event_date, P5a_q07_urinary_frequency, P5a_q14a_blood_urine, P5a_q08_urinary_flow, P5a_q14b_blood_bowels, P5a_q15_sticky_slimy_motions)
-CRO <- prosTox %>%
-  select(SubjectId, date, proctitis, rectal_bleeding, haematuria, urinary_frequency, urinary_retention)
 
 
 toxicityPRO <- merge(PRO, radiotherapyStart, by = 'SubjectId')
@@ -67,11 +65,6 @@ toxicityPRO$monthStartTreat <- interval(ymd(as.Date(toxicityPRO$p3radio_startdat
 toxicityPRO$monthStartTreat = toxicityPRO$monthStartTreat %/% months(1)
 View(toxicityPRO)
 
-toxicityCRO <- merge(CRO, radiotherapyStart, by = 'SubjectId')
-toxicityCRO$monthStartTreat <- interval(ymd(as.Date(toxicityCRO$p3radio_startdate)), ymd(as.Date(toxicityCRO$date)))
-toxicityCRO$monthStartTreat = toxicityCRO$monthStartTreat %/% months(1)
-View(toxicityCRO)
-### 
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
@@ -164,7 +157,7 @@ ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) +
 
 
 ### save plots - change name
-ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostate.jpg")
+ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostateLatePRO.jpg")
 
 
 
@@ -259,7 +252,8 @@ confint(t, level = 0.95)
 
 
 #### smoker 
-t <- glm(STAT~wprs + Country + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+### Country
+t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
 summary(t) 
 t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
