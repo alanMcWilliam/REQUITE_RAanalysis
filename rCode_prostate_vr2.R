@@ -29,6 +29,7 @@ library(dplyr)
 library(summarytools)
 library(lubridate)
 library(ggpubr)
+library(stringr)
 
 
 ############################################################################################
@@ -174,7 +175,7 @@ View(toxicityFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
-write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/prostate_acuteSTAT.csv")
+#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/prostate_acuteSTAT.csv")
 
 
 ############################################################################################
@@ -219,7 +220,7 @@ View(requite_risk_scores[["gene_dose"]])
 
 prs <- cbind(requite_risk_scores[[2]], requite_risk_scores[["prs"]], requite_risk_scores[["wprs"]])
 colnames(prs) <- c("SubjectId", "Site", "Country", "CancerType", "prs", "wprs")
-#View(prs)
+View(prs)
 
 
 STAT_prs <- merge(toxicityFilteredSTAT, prs, by = "SubjectId")
@@ -242,6 +243,48 @@ ggplot(data=STAT_prs, aes(wprs)) +
 plot(STAT_prs$STAT, STAT_prs$prs)
 plot(STAT_prs$STAT, STAT_prs$wprs)
 
+
+##########################################################################################
+### load in Sarah's PRS
+sarahPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/listSarah/REQUITE_breast_lung_prostate_RA_PRS.txt", sep = "\t", header = F)
+colnames(sarahPRS) <- c("SampleID", "prs_sarah", "wprs_sarah")
+sarahPRS$SampleID <- gsub('.{7}$', '', sarahPRS$SampleID)
+View(sarahPRS)
+
+sample <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
+View(sampleID)
+
+sarahPRS <- merge(sarahPRS, sample, by = "SampleID")
+View(sarahPRS)
+
+compPRS <- merge(sarahPRS, prs, by = "SubjectId")
+View(compPRS)
+
+summary(compPRS$prs)
+summary(compPRS$prs_sarah)
+
+summary(compPRS$wprs)
+summary(compPRS$wprs_sarah)
+
+ggplot(data = compPRS) +
+  geom_histogram(aes(x = prs_sarah), 
+                 alpha=0.3, fill ="red",binwidth=2,position="dodge") +
+  geom_histogram(aes(x = prs), 
+                 alpha=0.3, fill ="green",binwidth=2,position="dodge") +
+  labs(title = "", x = "prs") +
+  theme(panel.background = element_blank())
+
+ggplot(data = compPRS) +
+  geom_histogram(aes(x = wprs_sarah), 
+                 alpha=0.3, fill ="red",binwidth=0.2,position="dodge") +
+  geom_histogram(aes(x = wprs), 
+                 alpha=0.3, fill ="green",binwidth=0.2,position="dodge") +
+  labs(title = "", x = "wprs") +
+  theme(panel.background = element_blank())
+
+
+### join for testing
+STAT_prs <- merge(toxicityFilteredSTAT, compPRS, by = "SubjectId")
 
 ##########################################################################################
 ### need to select other patient factors
@@ -312,8 +355,26 @@ plot(density(resid(t))) #A density plot
 qqnorm(resid(t)) # A quantile normal plot - good for checking normality
 qqline(resid(t))
 
+##########################################################################################
+### comparing Sarah PRS
+
+t <- glm(STAT~prs, data = STAT_prs_factors)
+summary(t)
+t <- glm(STAT~prs_sarah, data = STAT_prs_factors)
+summary(t)
+
+t <- glm(STAT~wprs, data = STAT_prs_factors)
+summary(t)
+t <- glm(STAT~wprs_sarah, data = STAT_prs_factors)
+summary(t)
+
+t <- glm(STAT~prs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(t) 
+t <- glm(STAT~wprs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(t) 
 
 
+##########################################################################################
 ##### work with residuals
 
 t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
@@ -447,12 +508,23 @@ tapply(STAT_prs_factors$wprs, STAT_prs_factors$ra, summary)
 tapply(STAT_prs_factors$prs, STAT_prs_factors$ra, summary)
 
 STAT_prs_factors$ra <- as.factor(STAT_prs_factors$ra)
-ggplot(STAT_prs_factors, aes(x = ra, y = wprs, fill = ra)) + 
-  geom_boxplot(notch = TRUE) + 
+ggplot(STAT_prs_factors, aes(x = ra, y = wprs)) + 
+  geom_boxplot() + 
   theme_classic() +
   stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
 
+ggplot(STAT_prs_factors, aes(x = ra, y = wprs_sarah)) + 
+  geom_boxplot() + 
+  theme_classic() +
+  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
+
+
 ggplot(STAT_prs_factors, aes(x = ra, y = prs)) + 
+  geom_boxplot() + 
+  theme_classic() +
+  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 50, size = 6)
+
+ggplot(STAT_prs_factors, aes(x = ra, y = prs_sarah)) + 
   geom_boxplot() + 
   theme_classic() +
   stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 50, size = 6)
