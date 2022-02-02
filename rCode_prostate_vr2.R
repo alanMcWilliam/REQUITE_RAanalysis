@@ -286,6 +286,31 @@ ggplot(data = compPRS) +
 ### join for testing
 STAT_prs <- merge(toxicityFilteredSTAT, compPRS, by = "SubjectId")
 
+
+##########################################################################################
+### load in my PRS + weighted
+
+alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS.csv", header = F)
+alanPRS <- t(alanPRS)
+alanPRS <- alanPRS[-1,]
+
+colnames(alanPRS) <- c("SampleID", "prs_alan")
+alanPRS <- as.data.frame(alanPRS)
+alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
+alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
+View(alanPRS)
+
+compPRS_all <- merge(alanPRS, compPRS, by = "SampleID")
+View(compPRS_all)
+
+ggplot(data = compPRS_all) +
+  geom_histogram(aes(x = prs_sarah), 
+                 alpha=0.3, fill ="red",binwidth=1,position="dodge") +
+  geom_histogram(aes(x = prs_alan), 
+                 alpha=0.3, fill ="green",binwidth=1,position="dodge") +
+  labs(title = "", x = "prs") +
+  theme(panel.background = element_blank())
+
 ##########################################################################################
 ### need to select other patient factors
 ### adjusting for androgen-deprivation therapy, prior prostatectomy, age at treatment, and total BED
@@ -356,22 +381,43 @@ qqnorm(resid(t)) # A quantile normal plot - good for checking normality
 qqline(resid(t))
 
 ##########################################################################################
-### comparing Sarah PRS
+### comparing Sarah and my PRS
 
-t <- glm(STAT~prs, data = STAT_prs_factors)
+STAT_prs_factors2 <- merge(STAT_prs_factors, compPRS_all, by = "SubjectId")
+View(STAT_prs_factors2)
+
+t <- glm(STAT~prs.x, data = STAT_prs_factors2)
 summary(t)
-t <- glm(STAT~prs_sarah, data = STAT_prs_factors)
+t <- glm(STAT~prs_sarah, data = STAT_prs_factors2)
+summary(t)
+t <- glm(STAT~prs_alan, data = STAT_prs_factors2)
 summary(t)
 
-t <- glm(STAT~wprs, data = STAT_prs_factors)
+
+t <- glm(STAT~wprs.x, data = STAT_prs_factors)
 summary(t)
 t <- glm(STAT~wprs_sarah, data = STAT_prs_factors)
 summary(t)
 
-t <- glm(STAT~prs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+t <- glm(STAT~prs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
 summary(t) 
+t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
+summary(t) 
+
 t <- glm(STAT~wprs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
 summary(t) 
+
+
+
+STAT_prs_factors2$prs_precentile_alan <- STAT_prs_factors2$prs_alan > quantile(STAT_prs_factors2$prs_alan, c(.95)) 
+t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors2)
+summary(t)
+
+
+t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
+summary(t) 
+
+
 
 
 ##########################################################################################
@@ -507,8 +553,8 @@ summary(factor(STAT_prs_factors$ra))
 tapply(STAT_prs_factors$wprs, STAT_prs_factors$ra, summary)
 tapply(STAT_prs_factors$prs, STAT_prs_factors$ra, summary)
 
-STAT_prs_factors$ra <- as.factor(STAT_prs_factors$ra)
-ggplot(STAT_prs_factors, aes(x = ra, y = wprs)) + 
+STAT_prs_factors2$ra <- as.factor(STAT_prs_factors2$ra)
+ggplot(STAT_prs_factors2, aes(x = ra, y = prs_alan)) + 
   geom_boxplot() + 
   theme_classic() +
   stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)

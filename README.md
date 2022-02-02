@@ -10,3 +10,9 @@ Scripts for calculating
 also availab le Brian Langs R code for calculating the PRS and weighted PRS scores for all REQUITE patients using the data published in this paper:
 https://www.nature.com/articles/nature12873#Sec15
 
+
+
+keep common variables for cross dataset
+REQUITE to select further for exploratory models
+
+Look at A Bartons new list - paper published?

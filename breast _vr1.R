@@ -248,6 +248,7 @@ ggplot(data = breast_STAT_prs) +
 
 #######################################################
 
+
 t <- glm(STAT~prs, data = breast_STAT_prs)
 summary(t)
 
@@ -262,6 +263,21 @@ summary(t)
 
 
 
+breast_STAT_prs$prs_precentile <- breast_STAT_prs$prs> quantile(breast_STAT_prs$prs, c(.90)) 
+breast_STAT_prs$prs_precentile_sarah <- breast_STAT_prs$prs_sarah> quantile(breast_STAT_prs$prs_sarah, c(.90)) 
+
+t <- glm(STAT~prs_precentile, data = breast_STAT_prs)
+summary(t)
+t <- glm(STAT~prs_precentile_sarah, data = breast_STAT_prs)
+summary(t)
+
+breast_STAT_prs$wprs_precentile <- breast_STAT_prs$wprs> quantile(breast_STAT_prs$wprs, c(.9)) 
+breast_STAT_prs$wprs_precentile_sarah <- breast_STAT_prs$wprs_sarah> quantile(breast_STAT_prs$wprs_sarah, c(.9)) 
+
+t <- glm(STAT~wprs_precentile, data = breast_STAT_prs)
+summary(t)
+t <- glm(STAT~wprs_precentile_sarah, data = breast_STAT_prs)
+summary(t)
 
 ############################################################
 ###### associate prs and wprs with toxicity endpoints
