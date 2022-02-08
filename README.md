@@ -12,7 +12,19 @@ https://www.nature.com/articles/nature12873#Sec15
 
 
 
+
 keep common variables for cross dataset
 REQUITE to select further for exploratory models
 
 Look at A Bartons new list - paper published?
+
+to do - 
+calculate PRS and wPRS with updated list of snps
+use current and new snps in analysis
+  STAT
+    prostate acute
+    prostate late - patient reported and clinician reported
+  individual toxicity end-points
+
+Breast and Lung - need full genomic data
+

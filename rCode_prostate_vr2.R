@@ -300,7 +300,19 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 View(alanPRS)
 
-compPRS_all <- merge(alanPRS, compPRS, by = "SampleID")
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS.csv", header = F)
+alanWPRS <- t(alanWPRS)
+alanWPRS <- alanWPRS[-1,]
+
+colnames(alanWPRS) <- c("SampleID", "wprs_alan")
+alanWPRS <- as.data.frame(alanWPRS)
+alanWPRS$SampleID <- as.numeric(alanWPRS$SampleID)
+alanWPRS$wprs_alan <- as.numeric(alanWPRS$wprs_alan)
+View(alanWPRS)
+
+compPRS_all <- merge(compPRS, alanPRS, by = "SampleID")
+compPRS_all <- merge(compPRS_all, alanWPRS, by = "SampleID")
+
 View(compPRS_all)
 
 ggplot(data = compPRS_all) +
@@ -309,6 +321,15 @@ ggplot(data = compPRS_all) +
   geom_histogram(aes(x = prs_alan), 
                  alpha=0.3, fill ="green",binwidth=1,position="dodge") +
   labs(title = "", x = "prs") +
+  theme(panel.background = element_blank())
+
+
+ggplot(data = compPRS_all) +
+  geom_histogram(aes(x = wprs_sarah), 
+                 alpha=0.3, fill ="red",binwidth=0.1,position="dodge") +
+  geom_histogram(aes(x = wprs_alan), 
+                 alpha=0.3, fill ="green",binwidth=0.1,position="dodge") +
+  labs(title = "", x = "wprs") +
   theme(panel.background = element_blank())
 
 ##########################################################################################
@@ -396,15 +417,20 @@ summary(t)
 
 t <- glm(STAT~wprs.x, data = STAT_prs_factors)
 summary(t)
-t <- glm(STAT~wprs_sarah, data = STAT_prs_factors)
+t <- glm(STAT~wprs_sarah, data = STAT_prs_factors2)
 summary(t)
+t <- glm(STAT~wprs_alan, data = STAT_prs_factors2)
+summary(t)
+
 
 t <- glm(STAT~prs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
 summary(t) 
 t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
 summary(t) 
 
-t <- glm(STAT~wprs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+t <- glm(STAT~wprs_sarah + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
+summary(t) 
+t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
 summary(t) 
 
 
@@ -413,10 +439,17 @@ STAT_prs_factors2$prs_precentile_alan <- STAT_prs_factors2$prs_alan > quantile(S
 t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors2)
 summary(t)
 
-
 t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
 summary(t) 
 
+
+
+STAT_prs_factors2$wprs_precentile_alan <- STAT_prs_factors2$wprs_alan > quantile(STAT_prs_factors2$wprs_alan, c(.95)) 
+t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors2)
+summary(t)
+
+t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors2)
+summary(t) 
 
 
 
