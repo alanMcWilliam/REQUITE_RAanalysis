@@ -12,7 +12,6 @@ https://www.nature.com/articles/nature12873#Sec15
 
 
 
-
 keep common variables for cross dataset
 REQUITE to select further for exploratory models
 
@@ -28,3 +27,4 @@ use current and new snps in analysis
 
 Breast and Lung - need full genomic data
 
+look at incoperating the rectum / bladder doses

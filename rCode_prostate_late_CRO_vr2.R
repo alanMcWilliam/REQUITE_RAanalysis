@@ -6,22 +6,8 @@
 #### Late toxicity analysis
 #### A McWilliam
 #### vr1 initial code for Brian's PRS 
+#### vr2 updated with new PRS calculation
 #### 
-#### 
-############################################################################################
-
-### 1. Read data in and merge
-########  Dataframes different sizes - toxicity entries multiple per patient
-########  Will need date of treatment start/end to calculate time
-### 2. select ID and colums of toxicity to calculated STAT - timepoints?
-### 3. calculate STAT for each patient
-### 4. select variables out for model building
-### 5. analyse against gene dose - logistic regressions / multi-variable / other ideas...  bootstrapping data etc
-
-### start with prostate
-
-
-
 ############################################################################################
 
 #### librarys needed

@@ -2,10 +2,12 @@
 
 ############################################################################################
 ####
-#### Script for calculating STAT from toxicity data
 #### A McWilliam
-#### vr1 7th May 2021
-#### vr2 8th June 2021
+#### vr1 7th May 2021 first code calculating PRS
+#### vr2 8th June 2021 updated to include multivarible analysis
+#### 
+#### code updated to incorperate PRS from Sarah and then my calculation of the PRS 
+#### 
 #### 
 ############################################################################################
 

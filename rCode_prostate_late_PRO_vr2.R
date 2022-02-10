@@ -2,26 +2,12 @@
 
 ############################################################################################
 ####
-#### Script for calculating STAT from toxicity data using clinician reported outcomes
+#### Script for calculating STAT from toxicity data using patient reported outcomes
 #### Late toxicity analysis
 #### A McWilliam
 #### vr1 initial code for Brian's PRS 
-#### 
-#### 
-############################################################################################
-
-### 1. Read data in and merge
-########  Dataframes different sizes - toxicity entries multiple per patient
-########  Will need date of treatment start/end to calculate time
-### 2. select ID and colums of toxicity to calculated STAT - timepoints?
-### 3. calculate STAT for each patient
-### 4. select variables out for model building
-### 5. analyse against gene dose - logistic regressions / multi-variable / other ideas...  bootstrapping data etc
-
-### start with prostate
-
-
-
+#### vr2 updated with new PRS calculation
+####
 ############################################################################################
 
 #### librarys needed
@@ -59,8 +45,6 @@ radiotherapyStart <- prosTreat %>%
 
 PRO <- prosPRO %>%
   select(SubjectId, event_date, P5a_q07_urinary_frequency, P5a_q14a_blood_urine, P5a_q08_urinary_flow, P5a_q14b_blood_bowels, P5a_q15_sticky_slimy_motions)
-CRO <- prosTox %>%
-  select(SubjectId, date, proctitis, rectal_bleeding, haematuria, urinary_frequency, urinary_retention)
 
 
 toxicityPRO <- merge(PRO, radiotherapyStart, by = 'SubjectId')
@@ -68,81 +52,77 @@ toxicityPRO$monthStartTreat <- interval(ymd(as.Date(toxicityPRO$p3radio_startdat
 toxicityPRO$monthStartTreat = toxicityPRO$monthStartTreat %/% months(1)
 View(toxicityPRO)
 
-toxicityCRO <- merge(CRO, radiotherapyStart, by = 'SubjectId')
-toxicityCRO$monthStartTreat <- interval(ymd(as.Date(toxicityCRO$p3radio_startdate)), ymd(as.Date(toxicityCRO$date)))
-toxicityCRO$monthStartTreat = toxicityCRO$monthStartTreat %/% months(1)
-View(toxicityCRO)
-### 
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
 minMonths = 0
 
 ######################################################################
-###  CRO
+###  PRO
 ######################################################################
 
 ## identify patients with baseline values
-baselineCounts <- toxicityCRO %>%
+baselineCounts <- toxicityPRO %>%
   group_by(SubjectId) %>%
   filter(monthStartTreat == 0) %>%
   select(SubjectId)
 
 ## filter by baseline and subtract first entry
-toxicityCROSubtract <- toxicityCRO %>%
-  select(SubjectId, monthStartTreat, proctitis, rectal_bleeding, haematuria, urinary_frequency, urinary_retention) %>%
+toxicityPROSubtract <- toxicityPRO %>%
+  select(SubjectId, monthStartTreat, P5a_q07_urinary_frequency, P5a_q14a_blood_urine, P5a_q08_urinary_flow, P5a_q14b_blood_bowels, P5a_q15_sticky_slimy_motions) %>%
   filter(SubjectId %in% baselineCounts$SubjectId) %>%
   group_by(SubjectId) %>%
-  mutate(proctitis_diff = proctitis - first(proctitis), rectal_bleeding_diff = rectal_bleeding - first(rectal_bleeding), haematuria_diff = haematuria - first(haematuria), urinary_frequency_diff = urinary_frequency - first(urinary_frequency), urinary_retention_diff = urinary_retention - first(urinary_retention)) %>%
+  mutate(P5a_q07_urinary_frequency_diff = P5a_q07_urinary_frequency - first(P5a_q07_urinary_frequency), P5a_q14a_blood_urine_diff = P5a_q14a_blood_urine - first(P5a_q14a_blood_urine), P5a_q08_urinary_flow_diff = P5a_q08_urinary_flow - first(P5a_q08_urinary_flow), P5a_q14b_blood_bowels_diff = P5a_q14b_blood_bowels - first(P5a_q14b_blood_bowels), P5a_q15_sticky_slimy_motions_diff = P5a_q15_sticky_slimy_motions - first(P5a_q15_sticky_slimy_motions)) %>%
   filter(monthStartTreat > minMonths) %>%
-  summarise(maxMonths = max(monthStartTreat), maxProctitis = max(proctitis_diff), maxRectal_bleeding = max(rectal_bleeding_diff), maxHaematuria = max(haematuria_diff), maxUrinary_frequency = max(urinary_frequency_diff), maxUrinary_retention = max(urinary_retention_diff)) %>%
-  select(SubjectId, maxMonths, maxProctitis, maxRectal_bleeding, maxHaematuria, maxUrinary_frequency, maxUrinary_retention)
+  summarise(maxMonths = max(monthStartTreat), maxUrinaryFrequency = max(P5a_q07_urinary_frequency_diff), maxHematuria = max(P5a_q14a_blood_urine_diff), maxDecreasedUrinaryStream = max(P5a_q08_urinary_flow_diff), maxRectalBleeding = max(P5a_q14b_blood_bowels_diff), maxRectalMucus = max(P5a_q15_sticky_slimy_motions_diff)) %>%
+  select(SubjectId, maxMonths, maxUrinaryFrequency, maxHematuria, maxDecreasedUrinaryStream, maxRectalBleeding, maxRectalMucus)
 
-toxicityCROSubtract[toxicityCROSubtract < 0] <- 0 
-View(toxicityCROSubtract)
+toxicityPROSubtract[toxicityPROSubtract < 0] <- 0 
+View(toxicityPROSubtract)
 
 ## patients without baseline
-toxicityCRONoBaseline <- toxicityCRO %>%
+toxicityPRONoBaseline <- toxicityPRO %>%
   filter(!SubjectId %in% baselineCounts$SubjectId) %>%
   filter(monthStartTreat > minMonths) %>%
   group_by(SubjectId) %>%
-  summarise(maxMonths = max(monthStartTreat), maxProctitis = max(proctitis), maxRectal_bleeding = max(rectal_bleeding), maxHaematuria = max(haematuria), maxUrinary_frequency = max(urinary_frequency), maxUrinary_retention = max(urinary_retention)) %>%
-  select(SubjectId, maxMonths, maxProctitis, maxRectal_bleeding, maxHaematuria, maxUrinary_frequency, maxUrinary_retention)
-View(toxicityCRONoBaseline)
+  summarise(maxMonths = max(monthStartTreat), maxUrinaryFrequency = max(P5a_q07_urinary_frequency), maxHematuria = max(P5a_q14a_blood_urine), maxDecreasedUrinaryStream = max(P5a_q08_urinary_flow), maxRectalBleeding = max(P5a_q14b_blood_bowels), maxRectalMucus = max(P5a_q15_sticky_slimy_motions)) %>%
+  select(SubjectId, maxMonths, maxUrinaryFrequency, maxHematuria, maxDecreasedUrinaryStream, maxRectalBleeding,  maxRectalMucus)
+  
+View(toxicityPRONoBaseline)
 
 ## join both together again
-toxicityCROFiltered <- rbind(toxicityCROSubtract, toxicityCRONoBaseline)
-View(toxicityCROFiltered)
+toxicityPROFiltered <- rbind(toxicityPROSubtract, toxicityPRONoBaseline)
+View(toxicityPROFiltered)
 
 ###create temp data frame to display summary stats
-toxicityCRO_summaryStats <- toxicityCROFiltered %>%
-  select(maxProctitis, maxRectal_bleeding, maxHaematuria, maxUrinary_frequency, maxUrinary_retention)
-view(dfSummary(toxicityCRO_summaryStats))
+toxicityPRO_summaryStats <- toxicityPROFiltered %>%
+  select(maxUrinaryFrequency, maxHematuria, maxDecreasedUrinaryStream, maxRectalBleeding,  maxRectalMucus)
+view(dfSummary(toxicityPRO_summaryStats))
 
 ## calculate STAT and join
-t2 <- toxicityCROFiltered[ ,3:ncol(toxicityCROFiltered)]
-col_Mean <- t2 %>% summarise_if(is.numeric, mean, na.rm = TRUE)
-col_SD <- t2 %>% summarise_if(is.numeric, sd, na.rm = TRUE)
-STAT <- matrix(NA, nrow = nrow(t2), ncol = 1)
+t <- toxicityPROFiltered[ ,3:ncol(toxicityPROFiltered)]
+col_Mean <- t %>% summarise_if(is.numeric, mean, na.rm = TRUE)
+col_SD <- t %>% summarise_if(is.numeric, sd, na.rm = TRUE)
+STAT <- matrix(NA, nrow = nrow(t), ncol = 1)
 
-for(i in 1:nrow(t2)){
-  tmp2 = 0
-  count2 = 0
-  for(j in 1:length(t2)){
-    if(!is.na(t2[i,j])){
-      tmp2 = tmp2 + (t2[i,j] - col_Mean[j])/col_SD[j]
-      count2 = count2 + 1
+for(i in 1:nrow(t)){
+  tmp = 0
+  count = 0
+  for(j in 1:length(t)){
+    if(!is.na(t[i,j])){
+      tmp = tmp + (t[i,j] - col_Mean[j])/col_SD[j]
+      count = count + 1
     }
   }
-  tmp2 = tmp2/count2
-  STAT[i] = tmp2
+  tmp = tmp/count
+  STAT[i] = tmp
 }
 View(STAT)
 
 ### join STAT back on to data 
-toxicityCROFilteredSTAT <- bind_cols(toxicityCROFiltered, t(as.data.frame(STAT)))
-names(toxicityCROFilteredSTAT)[ncol(toxicityCROFilteredSTAT)] <- "STAT"
-View(toxicityCROFilteredSTAT)
+toxicityPROFilteredSTAT <- bind_cols(toxicityPROFiltered, t(as.data.frame(STAT)))
+names(toxicityPROFilteredSTAT)[ncol(toxicityPROFilteredSTAT)] <- "STAT"
+View(toxicityPROFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
@@ -154,17 +134,17 @@ View(toxicityCROFilteredSTAT)
 ### summary STAT and plot histogram
 ###
 
-summary(toxicityCROFilteredSTAT$STAT)
+summary(toxicityPROFilteredSTAT$STAT)
 
-ggplot(data=toxicityCROFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,4, by = 0.3),
+ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) + 
+  geom_histogram(breaks=seq(-1,3, by = 0.1),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
 
 
 ### save plots - change name
-ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostate.jpg")
+ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostateLatePRO.jpg")
 
 
 
@@ -190,25 +170,25 @@ colnames(prs) <- c("SubjectId", "Site", "Country", "CancerType", "prs", "wprs")
 #View(prs)
 
 
-CRO_STAT_prs <- merge(toxicityCROFilteredSTAT, prs, by = "SubjectId")
-View(CRO_STAT_prs)
+PRO_STAT_prs <- merge(toxicityPROFilteredSTAT, prs, by = "SubjectId")
+View(PRO_STAT_prs)
 
-summary(CRO_STAT_prs$prs)
-ggplot(data=CRO_STAT_prs, aes(prs)) + 
+summary(PRO_STAT_prs$prs)
+ggplot(data=PRO_STAT_prs, aes(prs)) + 
   geom_histogram(breaks=seq(50,95, by = 1),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "prs" ) +
   theme(panel.background = element_blank())
 
-summary(CRO_STAT_prs$wprs)
-ggplot(data=CRO_STAT_prs, aes(wprs)) + 
+summary(PRO_STAT_prs$wprs)
+ggplot(data=PRO_STAT_prs, aes(wprs)) + 
   geom_histogram(breaks=seq(5,15, by = 0.2),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "wprs" ) +
   theme(panel.background = element_blank())
 
-plot(CRO_STAT_prs$STAT, CRO_STAT_prs$prs)
-plot(CRO_STAT_prs$STAT, CRO_STAT_prs$wprs)
+plot(PRO_STAT_prs$STAT, PRO_STAT_prs$prs)
+plot(PRO_STAT_prs$STAT, PRO_STAT_prs$wprs)
 
 
 ##########################################################################################
@@ -233,16 +213,16 @@ patTreat$doseBED <-   patTreat$p3radio_externalbeam_dose_Gy  * (1 + (patTreat$do
 
 
 
-CRO_STAT_prs_factors <- merge(CRO_STAT_prs, patFactors, by = "SubjectId")
-CRO_STAT_prs_factors <- merge(CRO_STAT_prs_factors, patTreat, by = "SubjectId")
+PRO_STAT_prs_factors <- merge(PRO_STAT_prs, patFactors, by = "SubjectId")
+PRO_STAT_prs_factors <- merge(PRO_STAT_prs_factors, patTreat, by = "SubjectId")
 
 ### clean the data
-CRO_STAT_prs_factors <- CRO_STAT_prs_factors %>%
+PRO_STAT_prs_factors <- PRO_STAT_prs_factors %>%
   filter(CancerType == 'Prostate')
 
-View(CRO_STAT_prs_factors)
+View(PRO_STAT_prs_factors)
 
-view(dfSummary(CRO_STAT_prs_factors))
+view(dfSummary(PRO_STAT_prs_factors))
 
 ##########################################################################################
 
@@ -251,18 +231,18 @@ view(dfSummary(CRO_STAT_prs_factors))
 #summary(t2)
 
 
-t <- glm(STAT~prs, data = CRO_STAT_prs_factors)
+t <- glm(STAT~prs, data = PRO_STAT_prs_factors)
 summary(t)
-t <- glm(STAT~wprs, data = CRO_STAT_prs_factors)
+t <- glm(STAT~wprs, data = PRO_STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
 
 
 #### smoker 
-##Country
-t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = CRO_STAT_prs_factors)
+### Country
+t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
 summary(t) 
-t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = CRO_STAT_prs_factors)
+t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
 AIC(t)
 
