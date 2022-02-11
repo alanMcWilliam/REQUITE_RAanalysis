@@ -147,48 +147,52 @@ ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) +
 ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostateLatePRO.jpg")
 
 
+##########################################################################################
+### load in PRS + wPRS
 
-############################################################################################
-### association with polygenetic risk scores
+alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS.csv", header = F)
+alanPRS <- t(alanPRS)
+alanPRS <- alanPRS[-1,]
 
-load("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/geneDose/data/REQUITE_PolygenicRiskScores_11May2021.RData")
+colnames(alanPRS) <- c("SampleID", "prs_alan")
+alanPRS <- as.data.frame(alanPRS)
+alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
+alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
+View(alanPRS)
 
-View(requite_risk_scores)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS.csv", header = F)
+alanWPRS <- t(alanWPRS)
+alanWPRS <- alanWPRS[-1,]
 
-### this has studyID
-View(requite_risk_scores[[2]])
-View(requite_risk_scores[["prs"]])
-View(requite_risk_scores[["wprs"]])
-View(requite_risk_scores[["gene_dose"]])
+colnames(alanWPRS) <- c("SampleID", "wprs_alan")
+alanWPRS <- as.data.frame(alanWPRS)
+alanWPRS$SampleID <- as.numeric(alanWPRS$SampleID)
+alanWPRS$wprs_alan <- as.numeric(alanWPRS$wprs_alan)
+View(alanWPRS)
 
-#tmp <- requite_risk_scores[["gene_dose"]][,1:1]
-#tmp
-#sum(tmp)
+PRS_all <- merge(alanPRS, alanWPRS, by = "SampleID")
+View(PRS_all)
 
-prs <- cbind(requite_risk_scores[[2]], requite_risk_scores[["prs"]], requite_risk_scores[["wprs"]])
-colnames(prs) <- c("SubjectId", "Site", "Country", "CancerType", "prs", "wprs")
-#View(prs)
+ggplot(data = PRS_all) +
+  geom_histogram(aes(x = prs_alan), 
+                 binwidth = 1, col = "skyblue", fill = "lightblue") +
+  labs(title = "", x = "prs") +
+  theme(panel.background = element_blank())
 
 
-PRO_STAT_prs <- merge(toxicityPROFilteredSTAT, prs, by = "SubjectId")
+ggplot(data = PRS_all) +
+  geom_histogram(aes(x = wprs_alan), 
+                 binwidth = 0.1, col = "skyblue", fill = "lightblue") +
+  labs(title = "", x = "prs") +
+  theme(panel.background = element_blank())
+
+
+## need to link back to patientID
+sampleIDlink <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
+
+PRO_STAT_prs <- merge(PRS_all, sampleIDlink, by = "SampleID")
+PRO_STAT_prs <- merge(PRO_STAT_prs, toxicityPROFilteredSTAT, by = "SubjectId")
 View(PRO_STAT_prs)
-
-summary(PRO_STAT_prs$prs)
-ggplot(data=PRO_STAT_prs, aes(prs)) + 
-  geom_histogram(breaks=seq(50,95, by = 1),
-                 col = "skyblue", fill = "lightblue") +
-  labs(title = i, x = "prs" ) +
-  theme(panel.background = element_blank())
-
-summary(PRO_STAT_prs$wprs)
-ggplot(data=PRO_STAT_prs, aes(wprs)) + 
-  geom_histogram(breaks=seq(5,15, by = 0.2),
-                 col = "skyblue", fill = "lightblue") +
-  labs(title = i, x = "wprs" ) +
-  theme(panel.background = element_blank())
-
-plot(PRO_STAT_prs$STAT, PRO_STAT_prs$prs)
-plot(PRO_STAT_prs$STAT, PRO_STAT_prs$wprs)
 
 
 ##########################################################################################
@@ -217,6 +221,9 @@ PRO_STAT_prs_factors <- merge(PRO_STAT_prs, patFactors, by = "SubjectId")
 PRO_STAT_prs_factors <- merge(PRO_STAT_prs_factors, patTreat, by = "SubjectId")
 
 ### clean the data
+#############
+### this doesn't work with updated code - need to grab treatment site elsewhere to check
+#############
 PRO_STAT_prs_factors <- PRO_STAT_prs_factors %>%
   filter(CancerType == 'Prostate')
 
@@ -231,20 +238,34 @@ view(dfSummary(PRO_STAT_prs_factors))
 #summary(t2)
 
 
-t <- glm(STAT~prs, data = PRO_STAT_prs_factors)
+t <- glm(STAT~prs_alan, data = PRO_STAT_prs_factors)
 summary(t)
-t <- glm(STAT~wprs, data = PRO_STAT_prs_factors)
+t <- glm(STAT~wprs_alan, data = PRO_STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
 
 
 #### smoker 
 ### Country
-t <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
+t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
 summary(t) 
-t <- glm(STAT~prs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
 AIC(t)
+
+
+PRO_STAT_prs_factors$prs_precentile_alan <- PRO_STAT_prs_factors$prs_alan > quantile(PRO_STAT_prs_factors$prs_alan, c(.90)) 
+t <- glm(STAT~prs_precentile_alan, data = PRO_STAT_prs_factors)
+summary(t)
+t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
+summary(t) 
+
+
+
+
+####################################################################################
+############ updating from here
+
 
 ##t <- glm(log(STAT)~wprs + age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 ###summary(t) 

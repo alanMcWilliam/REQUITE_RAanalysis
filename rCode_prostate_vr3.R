@@ -8,7 +8,8 @@
 #### 
 #### code updated to incorperate PRS from Sarah and then my calculation of the PRS 
 #### 
-#### 
+#### vr 3 updated for new PRS calculation
+####
 ############################################################################################
 
 ### 1. Read data in and merge
@@ -121,31 +122,6 @@ toxicity_summaryStats <- toxicityFiltered %>%
 
 stview(dfSummary(toxicity_summaryStats))
 
-
-### calculated the STAT for each patient
-#calcSTAT <- function(toxdf){
-#  ### allocate storage for STAT values
-#  STATtmp <- matrix(NA, nrow = nrow(toxdf), ncol = 1)
-#  
-#  ###calculate column mean and standard deviations
-#  col_Mean <- toxdf %>% 
-#    summarise_if(is.numeric, mean, na.rm = TRUE)
-#  col_SD <- toxdf %>% 
-#    summarise_if(is.numeric, sd, na.rm = TRUE)
-# 
-#  for(i in 1:nrow(toxdf)){
-#    tmp = 0
-#    for(j in 1:length(toxdf)){
-#      if(col_SD[j] != 0){
-#        tmp = tmp + (toxdf[i,j] - col_Mean[j])/col_SD[j]
-#        }
-#    }
-#    tmp = tmp/length(toxdf)
-#    STATtmp[i] = tmp
-#  }
-#  
-#  return(STATtmp)
-#}
 
 t <- toxicityFiltered[ ,3:ncol(toxicityFiltered)]
 col_Mean <- t %>% summarise_if(is.numeric, mean, na.rm = TRUE)
@@ -526,15 +502,15 @@ toxEndPoints <- toxEndPoints[-c(1, 2)]
 toxEndPoints
 
 
-#STAT_prs_factors2$prs_precentile_alan
+
 
 model_stats_toxPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
 for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
-  formula<-as.formula( paste(tmp, paste( "prs_alan" ), sep=" ~ " ) )
+  formula<-as.formula( paste(tmp, paste( "prs" ), sep=" ~ " ) )
   print(formula)
-  model<-glm(formula, family=binomial(link='logit'), data=STAT_prs_factors2)
+  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
   
   model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
