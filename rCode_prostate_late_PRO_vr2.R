@@ -150,7 +150,7 @@ ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATpr
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS_all.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -160,7 +160,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS_all.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -254,11 +254,15 @@ summary(t)
 AIC(t)
 
 
-PRO_STAT_prs_factors$prs_precentile_alan <- PRO_STAT_prs_factors$prs_alan > quantile(PRO_STAT_prs_factors$prs_alan, c(.90)) 
+PRO_STAT_prs_factors$prs_precentile_alan <- PRO_STAT_prs_factors$prs_alan > quantile(PRO_STAT_prs_factors$prs_alan, c(.95)) 
 t <- glm(STAT~prs_precentile_alan, data = PRO_STAT_prs_factors)
 summary(t)
 t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
+
+
+
+
 
 
 

@@ -2,11 +2,10 @@
 
 ############################################################################################
 ####
-#### Script for calculating STAT from toxicity data using clinician reported outcomes
-#### Late toxicity analysis
+#### Script for calculating STAT from toxicity data
 #### A McWilliam
-#### vr1 initial code for Brian's PRS 
-#### 
+#### vr1 7th May 2021
+#### vr2 8th June 2021
 #### 
 ############################################################################################
 
