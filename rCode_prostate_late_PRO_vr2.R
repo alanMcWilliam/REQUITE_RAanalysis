@@ -137,7 +137,7 @@ View(toxicityPROFilteredSTAT)
 summary(toxicityPROFilteredSTAT$STAT)
 
 ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,3, by = 0.1),
+  geom_histogram(breaks=seq(-1,3, by = 0.2),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
@@ -233,10 +233,6 @@ view(dfSummary(PRO_STAT_prs_factors))
 
 ##########################################################################################
 
-#STAT_prs_factors$Country
-#t2 <- glm(wprs~Country, data = STAT_prs_factors)
-#summary(t2)
-
 
 t <- glm(STAT~prs_alan, data = PRO_STAT_prs_factors)
 summary(t)
@@ -244,14 +240,10 @@ t <- glm(STAT~wprs_alan, data = PRO_STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
 
-
-#### smoker 
-### Country
 t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
 summary(t) 
 t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
-AIC(t)
 
 
 PRO_STAT_prs_factors$prs_precentile_alan <- PRO_STAT_prs_factors$prs_alan > quantile(PRO_STAT_prs_factors$prs_alan, c(.95)) 
@@ -260,91 +252,13 @@ summary(t)
 t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
 
+PRO_STAT_prs_factors$wprs_precentile_alan <- PRO_STAT_prs_factors$wprs_alan > quantile(PRO_STAT_prs_factors$wprs_alan, c(.95)) 
+t <- glm(STAT~wprs_precentile_alan, data = PRO_STAT_prs_factors)
+summary(t)
+t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
+summary(t) 
 
 
-
-
-
-
-
-####################################################################################
-############ updating from here
-
-
-##t <- glm(log(STAT)~wprs + age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
-###summary(t) 
-
-
-resid(t)
-plot(density(resid(t))) #A density plot
-qqnorm(resid(t)) # A quantile normal plot - good for checking normality
-qqline(resid(t))
-
-
-
-##### work with residuals
-
-t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
-summary(t2) 
-AIC(t2)
-
-resid(t2)
-plot(density(resid(t2))) #A density plot
-qqnorm(resid(t2)) # A quantile normal plot - good for checking normality
-qqline(resid(t2))
-
-
-residualsTmp <- t2$residuals 
-residuals_present <- intersect(names(residualsTmp),rownames(STAT_prs_factors))
-STAT_residuals <- STAT_prs_factors[residuals_present,]
-STAT_residuals$residual<-residualsTmp
-
-View(STAT_residuals)
-
-t_residual <- glm(wprs~residual, data = STAT_residuals)
-summary(t_residual)
-
-
-#### residuals with individual varients
-geneDose = requite_risk_scores[["gene_dose"]]
-## get names of snps
-snpNames<-rownames(geneDose)
-snpNames
-
-
-geneDose <- as.data.frame(t(as.matrix(geneDose)))
-geneDose <- cbind(requite_risk_scores[[2]], geneDose)
-View(geneDose)
-
-## join geneDose with residuals
-geneDose = rename(geneDose, SubjectId = Id)
-STAT_residuals_geneDose <- merge(STAT_residuals, geneDose, by = "SubjectId")
-View(STAT_residuals_geneDose)
-
-
-
-model_stats<-matrix(ncol=6,nrow=length(snpNames))
-
-for (i in 1:length(snpNames)) {
-  formula<-as.formula( paste(snpNames[i], paste( "residual" ), sep=" ~ " ) )
-  model<-glm(formula, data=STAT_residuals_geneDose)
-  print(formula)
-  
-  model_stats[i,1]<-as.numeric(coef(model)[2])#beta
-  model_stats[i,2:3]<-as.numeric(confint(model,"residual"))#upper-, lower-CI
-  model_stats[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
-  model_stats[i,5]<-1/(model_stats[i,4]^2)#weights
-  model_stats[i,6]<-summary(model)$coeff[2,4]#p-value
-  
-  
-  
-}
-
-colnames(model_stats)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
-rownames(model_stats)<-snpNames	
-View(model_stats)
-write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResultssnps.csv")
-summary(model_stats)
 
 ###### associate prs and wprs with toxicity endpoints
 toxEndPoints <- colnames(toxicityFiltered)
