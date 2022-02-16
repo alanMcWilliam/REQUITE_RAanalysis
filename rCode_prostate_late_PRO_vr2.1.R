@@ -16,7 +16,7 @@ library(dplyr)
 library(summarytools)
 library(lubridate)
 library(ggpubr)
-
+ 
 
 ############################################################################################
 ### Data cleaning and calculating the STAT
@@ -87,7 +87,7 @@ toxicityPRONoBaseline <- toxicityPRO %>%
   group_by(SubjectId) %>%
   summarise(maxMonths = max(monthStartTreat), maxUrinaryFrequency = max(P5a_q07_urinary_frequency), maxHematuria = max(P5a_q14a_blood_urine), maxDecreasedUrinaryStream = max(P5a_q08_urinary_flow), maxRectalBleeding = max(P5a_q14b_blood_bowels), maxRectalMucus = max(P5a_q15_sticky_slimy_motions)) %>%
   select(SubjectId, maxMonths, maxUrinaryFrequency, maxHematuria, maxDecreasedUrinaryStream, maxRectalBleeding,  maxRectalMucus)
-  
+
 View(toxicityPRONoBaseline)
 
 ## join both together again
@@ -137,7 +137,7 @@ View(toxicityPROFilteredSTAT)
 summary(toxicityPROFilteredSTAT$STAT)
 
 ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,3, by = 0.1),
+  geom_histogram(breaks=seq(-1,3, by = 0.2),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
@@ -233,10 +233,6 @@ view(dfSummary(PRO_STAT_prs_factors))
 
 ##########################################################################################
 
-#STAT_prs_factors$Country
-#t2 <- glm(wprs~Country, data = STAT_prs_factors)
-#summary(t2)
-
 
 t <- glm(STAT~prs_alan, data = PRO_STAT_prs_factors)
 summary(t)
@@ -244,14 +240,10 @@ t <- glm(STAT~wprs_alan, data = PRO_STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
 
-
-#### smoker 
-### Country
 t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = PRO_STAT_prs_factors)
 summary(t) 
 t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
-AIC(t)
 
 
 PRO_STAT_prs_factors$prs_precentile_alan <- PRO_STAT_prs_factors$prs_alan > quantile(PRO_STAT_prs_factors$prs_alan, c(.95)) 
@@ -260,10 +252,70 @@ summary(t)
 t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
 summary(t) 
 
+PRO_STAT_prs_factors$wprs_precentile_alan <- PRO_STAT_prs_factors$wprs_alan > quantile(PRO_STAT_prs_factors$wprs_alan, c(.95)) 
+t <- glm(STAT~wprs_precentile_alan, data = PRO_STAT_prs_factors)
+summary(t)
+t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = PRO_STAT_prs_factors)
+summary(t) 
 
 
+###### associate prs and wprs with toxicity endpoints
+toxEndPoints <- colnames(toxicityPROFiltered)
+toxEndPoints <- toxEndPoints[-c(1, 2)]
+toxEndPoints
 
 
+model_stats_toxPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
+
+for (i in 1:length(toxEndPoints)) {
+  tmp <- paste("factor(",toxEndPoints[i],")")
+  formula<-as.formula( paste(tmp, paste( "prs_alan" ), sep=" ~ " ) )
+  print(formula)
+  model<-glm(formula, family=binomial(link='logit'), data=PRO_STAT_prs_factors)
+  
+  model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
+  #print(model_stats_toxPRS[i,1])
+  model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs_alan"))#upper-, lower-CI
+  #print(model_stats_toxPRS[i,2:3])
+  model_stats_toxPRS[i,4]<-(model_stats_toxPRS[i,3] - model_stats_toxPRS[i,2])/(2*1.96)#SE
+  model_stats_toxPRS[i,5]<-1/(model_stats_toxPRS[i,4]^2)#weights
+  model_stats_toxPRS[i,6]<-summary(model)$coeff[2,4]#p-value
+  
+  
+}
+
+colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
+rownames(model_stats_toxPRS)<-toxEndPoints	
+View(model_stats_toxPRS)
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateLatePROResults_toxoictyPRS.csv")
+summary(model_stats_toxPRS)
+
+
+######
+model_stats_toxWPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
+
+for (i in 1:length(toxEndPoints)) {
+  tmp <- paste("factor(",toxEndPoints[i],")")
+  formula<-as.formula( paste(tmp, paste( "wprs_alan" ), sep=" ~ " ) )
+  print(formula)
+  model<-glm(formula, family=binomial(link='logit'), data=PRO_STAT_prs_factors)
+  
+  model_stats_toxWPRS[i,1]<-as.numeric(coef(model)[2])#beta
+  #print(model_stats_toxPRS[i,1])
+  model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs_alan"))#upper-, lower-CI
+  #print(model_stats_toxPRS[i,2:3])
+  model_stats_toxWPRS[i,4]<-(model_stats_toxWPRS[i,3] - model_stats_toxWPRS[i,2])/(2*1.96)#SE
+  model_stats_toxWPRS[i,5]<-1/(model_stats_toxWPRS[i,4]^2)#weights
+  model_stats_toxWPRS[i,6]<-summary(model)$coeff[2,4]#p-value
+  
+  
+}
+
+colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
+rownames(model_stats_toxWPRS)<-toxEndPoints	
+View(model_stats_toxWPRS)
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateLatePROResults_toxoictyWPRS.csv")
+summary(model_stats_toxWPRS)
 
 
 
@@ -354,20 +406,21 @@ toxEndPoints
 
 
 
+### percentiles
 model_stats_toxPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
 for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
-  formula<-as.formula( paste(tmp, paste( "prs" ), sep=" ~ " ) )
+  formula<-as.formula( paste(tmp, paste( "prs_precentile_alan" ), sep=" ~ " ) )
   print(formula)
-  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
+  model<-glm(formula, family=binomial(link='logit'), data=PRO_STAT_prs_factors)
   
   model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
-  model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs"))#upper-, lower-CI
+  #model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs_precentile_alan"))#upper-, lower-CI
   #print(model_stats_toxPRS[i,2:3])
-  model_stats_toxPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
-  model_stats_toxPRS[i,5]<-1/(model_stats[i,4]^2)#weights
+  model_stats_toxPRS[i,4]<-(model_stats_toxPRS[i,3] - model_stats_toxPRS[i,2])/(2*1.96)#SE
+  model_stats_toxPRS[i,5]<-1/(model_stats_toxPRS[i,4]^2)#weights
   model_stats_toxPRS[i,6]<-summary(model)$coeff[2,4]#p-value
   
   
@@ -376,7 +429,7 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxPRS)<-toxEndPoints	
 View(model_stats_toxPRS)
-write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxoictyPRS.csv")
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateLatePROResults_toxoictyPRSpercentile.csv")
 summary(model_stats_toxPRS)
 
 
@@ -385,16 +438,16 @@ model_stats_toxWPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
 for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
-  formula<-as.formula( paste(tmp, paste( "wprs" ), sep=" ~ " ) )
+  formula<-as.formula( paste(tmp, paste( "wprs_precentile_alan" ), sep=" ~ " ) )
   print(formula)
-  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
+  model<-glm(formula, family=binomial(link='logit'), data=PRO_STAT_prs_factors)
   
   model_stats_toxWPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
-  model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs"))#upper-, lower-CI
+  #model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs_precentile_alan"))#upper-, lower-CI
   #print(model_stats_toxPRS[i,2:3])
-  model_stats_toxWPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
-  model_stats_toxWPRS[i,5]<-1/(model_stats[i,4]^2)#weights
+  model_stats_toxWPRS[i,4]<-(model_stats_toxWPRS[i,3] - model_stats_toxWPRS[i,2])/(2*1.96)#SE
+  model_stats_toxWPRS[i,5]<-1/(model_stats_toxWPRS[i,4]^2)#weights
   model_stats_toxWPRS[i,6]<-summary(model)$coeff[2,4]#p-value
   
   
@@ -403,9 +456,9 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxWPRS)<-toxEndPoints	
 View(model_stats_toxWPRS)
-write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxoictyWPRS.csv")
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateLatePROResults_toxoictyWPRSpercentile.csv")
 summary(model_stats_toxWPRS)
- 
+
 
 ####################################################
 

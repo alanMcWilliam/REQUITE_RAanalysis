@@ -216,9 +216,11 @@ ggplot(data = PRS_all) +
 ggplot(data = PRS_all) +
   geom_histogram(aes(x = wprs_alan), 
                  binwidth = 0.1, col = "skyblue", fill = "lightblue") +
-  labs(title = "", x = "prs") +
+  labs(title = "", x = "wprs") +
   theme(panel.background = element_blank())
 
+summary(PRS_all$prs_alan)
+summary(PRS_all$wprs_alan)
 
 ## need to link back to patientID
 sampleIDlink <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
@@ -270,35 +272,30 @@ view(dfSummary(STAT_prs_factors))
 
 t <- glm(STAT~prs_alan, data = STAT_prs_factors)
 summary(t)
-
 t <- glm(STAT~wprs_alan, data = STAT_prs_factors)
 summary(t)
 
-
-t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+## + ra
+t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
-
-
-t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
-
 
 
 STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.95)) 
-
 t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 
-t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
 
 
 
-STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.90)) 
+STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.95)) 
 t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 
-t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
 summary(t) 
 
 
@@ -344,6 +341,27 @@ qqnorm(resid(t)) # A quantile normal plot - good for checking normality
 qqline(resid(t))
 
 
+#######################################################
+#######################################################
+### look at patients with Rhematoid arthritis
+summary(factor(STAT_prs_factors$ra))
+tapply(STAT_prs_factors$wprs_alan, STAT_prs_factors$ra, summary)
+tapply(STAT_prs_factors$prs_alan, STAT_prs_factors$ra, summary)
+
+STAT_prs_factors$ra <- as.factor(STAT_prs_factors$ra)
+ggplot(STAT_prs_factors, aes(x = ra, y = prs_alan)) + 
+  geom_boxplot() + 
+  theme_classic() +
+  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
+
+ggplot(STAT_prs_factors, aes(x = ra, y = wprs_alan)) + 
+  geom_boxplot() + 
+  theme_classic() +
+  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
+
+
+
+
 
 ##########################################################################################
 ##### work with residuals
@@ -365,34 +383,57 @@ STAT_residuals$residual<-residualsTmp
 
 View(STAT_residuals)
 
-t_residual <- glm(wprs~residual, data = STAT_residuals)
+t_residual <- glm(wprs_alan~residual, data = STAT_residuals)
+summary(t_residual)
+t_residual <- glm(prs_alan~residual, data = STAT_residuals)
+summary(t_residual)
+
+t_residual <- glm(prs_precentile_alan~residual, data = STAT_residuals)
+summary(t_residual)
+t_residual <- glm(wprs_precentile_alan~residual, data = STAT_residuals)
 summary(t_residual)
 
 
-#### residuals with individual varients
-geneDose = requite_risk_scores[["gene_dose"]]
+### read in genedoses and format dataframe
+genedose <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/genedoses.csv", header = F)
+genedose <- t(genedose)
+genedose <- genedose[-1,]
+genedose <- as.data.frame(genedose)
+
+
+colnames(genedose) <- genedose[1,]
+genedose <- genedose[-1,]
+names(genedose)[names(genedose) == 'snp'] <- 'SampleID'
+
+genedose <- as.data.frame(sapply(genedose, as.numeric))
+
+## split colnames
+## three snps named incorrectly that will break this function, rename before reading in
+t <- colnames(genedose)
+t <- strsplit(t, ":")
+colnames(genedose) <- sapply(t, "[", 1)
+
 ## get names of snps
-snpNames<-rownames(geneDose)
+snpNames<-colnames(genedose)
 snpNames
 
 
-geneDose <- as.data.frame(t(as.matrix(geneDose)))
-geneDose <- cbind(requite_risk_scores[[2]], geneDose)
-View(geneDose)
-
 ## join geneDose with residuals
-geneDose = rename(geneDose, SubjectId = Id)
-STAT_residuals_geneDose <- merge(STAT_residuals, geneDose, by = "SubjectId")
+STAT_residuals_geneDose <- merge(STAT_residuals, genedose, by = "SampleID")
 View(STAT_residuals_geneDose)
 
 
 
 model_stats<-matrix(ncol=6,nrow=length(snpNames))
 
-for (i in 1:length(snpNames)) {
+for (i in 2:length(snpNames)) {
+  print(snpNames[i])
+}
+  
+for (i in 2:length(snpNames)) {
   formula<-as.formula( paste(snpNames[i], paste( "residual" ), sep=" ~ " ) )
-  model<-glm(formula, data=STAT_residuals_geneDose)
   print(formula)
+  model<-glm(formula, data=STAT_residuals_geneDose)
   
   model_stats[i,1]<-as.numeric(coef(model)[2])#beta
   model_stats[i,2:3]<-as.numeric(confint(model,"residual"))#upper-, lower-CI
@@ -407,8 +448,11 @@ for (i in 1:length(snpNames)) {
 colnames(model_stats)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats)<-snpNames	
 View(model_stats)
-write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResultssnps.csv")
+write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateResidualsSnp.csv")
 summary(model_stats)
+
+
+
 
 ###### associate prs and wprs with toxicity endpoints
 toxEndPoints <- colnames(toxicityFiltered)
@@ -422,13 +466,13 @@ model_stats_toxPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
 for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
-  formula<-as.formula( paste(tmp, paste( "prs" ), sep=" ~ " ) )
+  formula<-as.formula( paste(tmp, paste( "prs_alan" ), sep=" ~ " ) )
   print(formula)
   model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
-  
+  #print(model)
   model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
-  model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs"))#upper-, lower-CI
+  model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs_alan"))#upper-, lower-CI
   #print(model_stats_toxPRS[i,2:3])
   model_stats_toxPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
   model_stats_toxPRS[i,5]<-1/(model_stats[i,4]^2)#weights
@@ -440,8 +484,35 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxPRS)<-toxEndPoints	
 View(model_stats_toxPRS)
-write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxoictyPRS.csv")
-summary(model_stats_toxPRS)
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyPRS.csv")
+#summary(model_stats_toxPRS)
+
+###################
+
+model_stats_toxPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
+
+for (i in 1:length(toxEndPoints)) {
+  tmp <- paste("factor(",toxEndPoints[i],")")
+  formula<-as.formula( paste(tmp, paste( "prs_precentile_alan" ), sep=" ~ " ) )
+  print(formula)
+  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
+  #print(model)
+  model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
+  #print(model_stats_toxPRS[i,1])
+  #model_stats_toxPRS[i,2:3]<-as.numeric(confint(model,"prs_precentile_alan"))#upper-, lower-CI
+  #print(model_stats_toxPRS[i,2:3])
+  model_stats_toxPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
+  model_stats_toxPRS[i,5]<-1/(model_stats[i,4]^2)#weights
+  model_stats_toxPRS[i,6]<-summary(model)$coeff[2,4]#p-value
+  
+  
+}
+
+colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
+rownames(model_stats_toxPRS)<-toxEndPoints	
+View(model_stats_toxPRS)
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyPRS_percentile.csv")
+
 
 
 ######
@@ -449,13 +520,13 @@ model_stats_toxWPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
 for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
-  formula<-as.formula( paste(tmp, paste( "wprs" ), sep=" ~ " ) )
+  formula<-as.formula( paste(tmp, paste( "wprs_alan" ), sep=" ~ " ) )
   print(formula)
   model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
   
   model_stats_toxWPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
-  model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs"))#upper-, lower-CI
+  model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs_alan"))#upper-, lower-CI
   #print(model_stats_toxPRS[i,2:3])
   model_stats_toxWPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
   model_stats_toxWPRS[i,5]<-1/(model_stats[i,4]^2)#weights
@@ -467,38 +538,46 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxWPRS)<-toxEndPoints	
 View(model_stats_toxWPRS)
-write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxoictyWPRS.csv")
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyWPRS.csv")
 summary(model_stats_toxWPRS)
- 
-
-####################################################
-
-### look at patients with Rhematoid arthritis
-summary(factor(STAT_prs_factors$ra))
-tapply(STAT_prs_factors$wprs, STAT_prs_factors$ra, summary)
-tapply(STAT_prs_factors$prs, STAT_prs_factors$ra, summary)
-
-STAT_prs_factors2$ra <- as.factor(STAT_prs_factors2$ra)
-ggplot(STAT_prs_factors2, aes(x = ra, y = prs_alan)) + 
-  geom_boxplot() + 
-  theme_classic() +
-  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
-
-ggplot(STAT_prs_factors, aes(x = ra, y = wprs_sarah)) + 
-  geom_boxplot() + 
-  theme_classic() +
-  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 6, size = 6)
 
 
-ggplot(STAT_prs_factors, aes(x = ra, y = prs)) + 
-  geom_boxplot() + 
-  theme_classic() +
-  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 50, size = 6)
+######
+model_stats_toxWPRS<-matrix(ncol=6,nrow=(length(toxEndPoints)))
 
-ggplot(STAT_prs_factors, aes(x = ra, y = prs_sarah)) + 
-  geom_boxplot() + 
-  theme_classic() +
-  stat_compare_means(method = "wilcox.test", aes(group = ra, label = paste0("p = ",..p.format..)), label.x = 1.4, label.y = 50, size = 6)
+for (i in 1:length(toxEndPoints)) {
+  tmp <- paste("factor(",toxEndPoints[i],")")
+  formula<-as.formula( paste(tmp, paste( "wprs_precentile_alan" ), sep=" ~ " ) )
+  print(formula)
+  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
+  
+  model_stats_toxWPRS[i,1]<-as.numeric(coef(model)[2])#beta
+  #print(model_stats_toxPRS[i,1])
+  #model_stats_toxWPRS[i,2:3]<-as.numeric(confint(model,"wprs_precentile_alan"))#upper-, lower-CI
+  #print(model_stats_toxPRS[i,2:3])
+  model_stats_toxWPRS[i,4]<-(model_stats[i,3] - model_stats[i,2])/(2*1.96)#SE
+  model_stats_toxWPRS[i,5]<-1/(model_stats[i,4]^2)#weights
+  model_stats_toxWPRS[i,6]<-summary(model)$coeff[2,4]#p-value
+  
+  
+}
+
+colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
+rownames(model_stats_toxWPRS)<-toxEndPoints	
+View(model_stats_toxWPRS)
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyWPRS_percentile.csv")
+summary(model_stats_toxWPRS)
+
+
+
+
+
+
+
+######################################
+######################################
+######################################
+######################################
 
 
 plot(STAT_prs_factors$age_at_radiotherapy_start_yrs, STAT_prs_factors$prs)

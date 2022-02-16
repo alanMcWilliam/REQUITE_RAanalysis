@@ -23,8 +23,12 @@ use current and new snps in analysis
   STAT
     prostate acute
     prostate late - patient reported and clinician reported
+  residuals
   individual toxicity end-points
+
 
 Breast and Lung - need full genomic data
 
 look at incoperating the rectum / bladder doses
+
+variable selection for REQUTE data
