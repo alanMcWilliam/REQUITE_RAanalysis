@@ -270,7 +270,7 @@ summary(t)
 
 ##### work with residuals
 
-t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = CRO_STAT_prs_factors)
 summary(t2) 
 AIC(t2)
 
@@ -281,40 +281,63 @@ qqline(resid(t2))
 
 
 residualsTmp <- t2$residuals 
-residuals_present <- intersect(names(residualsTmp),rownames(STAT_prs_factors))
-STAT_residuals <- STAT_prs_factors[residuals_present,]
+residuals_present <- intersect(names(residualsTmp),rownames(CRO_STAT_prs_factors))
+STAT_residuals <- CRO_STAT_prs_factors[residuals_present,]
 STAT_residuals$residual<-residualsTmp
 
 View(STAT_residuals)
 
-t_residual <- glm(wprs~residual, data = STAT_residuals)
+t_residual <- glm(wprs_alan~residual, data = STAT_residuals)
+summary(t_residual)
+t_residual <- glm(prs_alan~residual, data = STAT_residuals)
+summary(t_residual)
+
+t_residual <- glm(prs_precentile_alan~residual, data = STAT_residuals)
+summary(t_residual)
+t_residual <- glm(wprs_precentile_alan~residual, data = STAT_residuals)
 summary(t_residual)
 
 
-#### residuals with individual varients
-geneDose = requite_risk_scores[["gene_dose"]]
+### read in genedoses and format dataframe
+genedose <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/genedoses.csv", header = F)
+genedose <- t(genedose)
+genedose <- genedose[-1,]
+genedose <- as.data.frame(genedose)
+
+
+colnames(genedose) <- genedose[1,]
+genedose <- genedose[-1,]
+names(genedose)[names(genedose) == 'snp'] <- 'SampleID'
+
+genedose <- as.data.frame(sapply(genedose, as.numeric))
+
+## split colnames
+## three snps named incorrectly that will break this function, rename before reading in
+t <- colnames(genedose)
+t <- strsplit(t, ":")
+colnames(genedose) <- sapply(t, "[", 1)
+
 ## get names of snps
-snpNames<-rownames(geneDose)
+snpNames<-colnames(genedose)
 snpNames
 
 
-geneDose <- as.data.frame(t(as.matrix(geneDose)))
-geneDose <- cbind(requite_risk_scores[[2]], geneDose)
-View(geneDose)
-
 ## join geneDose with residuals
-geneDose = rename(geneDose, SubjectId = Id)
-STAT_residuals_geneDose <- merge(STAT_residuals, geneDose, by = "SubjectId")
+STAT_residuals_geneDose <- merge(STAT_residuals, genedose, by = "SampleID")
 View(STAT_residuals_geneDose)
 
 
 
 model_stats<-matrix(ncol=6,nrow=length(snpNames))
 
-for (i in 1:length(snpNames)) {
+for (i in 2:length(snpNames)) {
+  print(snpNames[i])
+}
+
+for (i in 2:length(snpNames)) {
   formula<-as.formula( paste(snpNames[i], paste( "residual" ), sep=" ~ " ) )
-  model<-glm(formula, data=STAT_residuals_geneDose)
   print(formula)
+  model<-glm(formula, data=STAT_residuals_geneDose)
   
   model_stats[i,1]<-as.numeric(coef(model)[2])#beta
   model_stats[i,2:3]<-as.numeric(confint(model,"residual"))#upper-, lower-CI
@@ -329,7 +352,7 @@ for (i in 1:length(snpNames)) {
 colnames(model_stats)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats)<-snpNames	
 View(model_stats)
-write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResultssnps.csv")
+write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateResidualsSnp_lateCRO.csv")
 summary(model_stats)
 
 
