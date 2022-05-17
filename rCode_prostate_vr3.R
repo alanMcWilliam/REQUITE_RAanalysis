@@ -41,20 +41,21 @@ library(stringr)
 
 ### read in prostate toxicities
 ### also need to know data of radiotherapy
-prosTox <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5011.tsv", sep="\t", header=T )
+prosTox <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5011.tsv", sep="\t", header=T )
 View(prosTox)
-prosTreat <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5009.tsv", sep="\t", header=T)
+prosTreat <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5009.tsv", sep="\t", header=T)
 View(prosTreat)
-prosFactor <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5010.tsv", sep="\t", header=T)
+prosFactor <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5010.tsv", sep="\t", header=T)
 View(prosFactor)
 
 
-prosPRO <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5003.tsv", sep="\t", header=T)
+prosPRO <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5003.tsv", sep="\t", header=T)
 View(prosPRO)
 
 ### select ID and radiotherapy start data
 radiotherapyStart <- prosTreat %>%
   select(SubjectId, p3radio_startdate)
+
 
 ### select out toxicity data of interest for STAT
 ### Prostate: urinary_tract_obstruction, urinary_retention, proctitis, perforation, bowel_obstruction, bowel_fistula,bowel_stenosis, bowel_ulceration,flatus, fistula
@@ -152,7 +153,7 @@ View(toxicityFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
-#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/prostate_acuteSTAT.csv")
+#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/prostate_acuteSTAT.csv")
 
 
 ############################################################################################
@@ -177,13 +178,13 @@ ggplot(data=toxicityFilteredSTAT, aes(log10(STAT))) +
 
 
 ### save plots - change name
-#ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATprostate.jpg")
+#ggsave("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/figures/STATprostate.jpg")
 
 
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS_all.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all2.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -193,7 +194,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 #View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS_all.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all2.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -223,7 +224,7 @@ summary(PRS_all$prs_alan)
 summary(PRS_all$wprs_alan)
 
 ## need to link back to patientID
-sampleIDlink <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
+sampleIDlink <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
 
 ##t <- merge(sampleIDlink, toxicityCROFilteredSTAT, by = "SubjectId")
 STAT_prs <- merge(PRS_all, sampleIDlink, by = "SampleID")
@@ -291,7 +292,7 @@ summary(t)
 
 
 
-STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.95)) 
+STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.85)) 
 t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 
@@ -395,7 +396,7 @@ summary(t_residual)
 
 
 ### read in genedoses and format dataframe
-genedose <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/genedoses.csv", header = F)
+genedose <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/genedoses.csv", header = F)
 genedose <- t(genedose)
 genedose <- genedose[-1,]
 genedose <- as.data.frame(genedose)
@@ -448,7 +449,7 @@ for (i in 2:length(snpNames)) {
 colnames(model_stats)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats)<-snpNames	
 View(model_stats)
-write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateResidualsSnp.csv")
+write.csv(model_stats, "C:\\Users\\alan_\\Desktop\\RAanalysis\\prostateResidualsSnp.csv")
 summary(model_stats)
 
 
@@ -484,7 +485,7 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxPRS)<-toxEndPoints	
 View(model_stats_toxPRS)
-write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyPRS.csv")
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\RAanalysis\\prostateAcuteResults_toxictyPRS.csv")
 #summary(model_stats_toxPRS)
 
 ###################
@@ -511,7 +512,7 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxPRS)<-toxEndPoints	
 View(model_stats_toxPRS)
-write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyPRS_percentile.csv")
+write.csv(model_stats_toxPRS, "C:\\Users\\alan_\\Desktop\\RAanalysis\\prostateAcuteResults_toxictyPRS_percentile.csv")
 
 
 
@@ -538,7 +539,7 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxWPRS)<-toxEndPoints	
 View(model_stats_toxWPRS)
-write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyWPRS.csv")
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\RAanalysis\\prostateAcuteResults_toxictyWPRS.csv")
 summary(model_stats_toxWPRS)
 
 
@@ -565,7 +566,7 @@ for (i in 1:length(toxEndPoints)) {
 colnames(model_stats_toxWPRS)<-c("Beta","Upper CI","Lower CI","SE","Weights","P-Value")
 rownames(model_stats_toxWPRS)<-toxEndPoints	
 View(model_stats_toxWPRS)
-write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\rheumotology\\prostateAcuteResults_toxictyWPRS_percentile.csv")
+write.csv(model_stats_toxWPRS, "C:\\Users\\alan_\\Desktop\\RAanalysis\\prostateAcuteResults_toxictyWPRS_percentile.csv")
 summary(model_stats_toxWPRS)
 
 
@@ -621,7 +622,7 @@ ggplot(STAT_prs_factors, aes(x = Country, y = prs)) +
 
 
 #############################
-sarahList <- read.csv("C:\\Users\\alan_\\Desktop\\rheumotology\\listSarah\\REQUITE_prostate_STATacute_for_Alan.txt", sep = '\t')
+sarahList <- read.csv("C:\\Users\\alan_\\Desktop\\RAanalysis\\listSarah\\REQUITE_prostate_STATacute_for_Alan.txt", sep = '\t')
 View(sarahList)
 colnames(sarahList)
 colnames(sarahList) <- c("SubjectId", "array_id", "stat_acute", "rstat_acute")

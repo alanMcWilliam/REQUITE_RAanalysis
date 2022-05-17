@@ -35,11 +35,11 @@ library(lubridate)
 
 ### read in prostate toxicities
 ### also need to know data of radiotherapy
-Tox <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Lung/study/datasets/dataset5025.tsv", sep="\t", header=T )
+Tox <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5025.tsv", sep="\t", header=T )
 View(Tox)
-Treat <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Lung/study/datasets/dataset5029.tsv", sep="\t", header=T)
+Treat <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5029.tsv", sep="\t", header=T)
 View(Treat)
-Factor <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Lung/study/datasets/dataset5022.tsv", sep="\t", header=T)
+Factor <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5022.tsv", sep="\t", header=T)
 View(Factor)
 
 ### select ID and radiotherapy start data
@@ -47,9 +47,6 @@ radiotherapyStart <- Treat %>%
   select(SubjectId, radiotherapy_start_date)
 
 ### select out toxicity data of interest for STAT
-### Breast:
-### Lung: 
-### Prostate: 
 toxicity <- Tox %>%
   select(SubjectId, date, cough, dyspnoea, broncho_pulmonary_haemorrhage, pneumonitis, pulmonary_fibrosis, esophagitis, dysphagia)
 
@@ -61,7 +58,8 @@ View(toxicity)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 12
+months = 3
+minMonths = 0
 
 ## pulmonary_fibrosis,  broncho_pulmonary_haemorrhage
 ## max_broncho_pulmonary_haemorrhage = max(broncho_pulmonary_haemorrhage), max_pulmonary_fibrosis = max(pulmonary_fibrosis),
@@ -116,7 +114,7 @@ View(toxicityFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
-write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/prostate.csv")
+write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/prostate.csv")
 
 
 ############################################################################################
