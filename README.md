@@ -32,3 +32,6 @@ Breast and Lung - need full genomic data
 look at incoperating the rectum / bladder doses
 
 variable selection for REQUTE data
+
+--------------------------------
+need to remove patients with higher toxicity at baseline >= 2 - check this against notes!
