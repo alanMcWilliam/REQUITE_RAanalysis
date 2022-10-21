@@ -5,19 +5,18 @@
 #### A McWilliam
 #### vr2 20th June 2022 updated for new lung analysis
 #### 
-####Acute toxicity - PRO
+#### late toxicity
 ####
 ############################################################################################
 
-### 1. Read data in and merge
-########  Dataframes different sizes - toxicity entries multiple per patient
-########  Will need date of treatment start/end to calculate time
-### 2. select ID and colums of toxicity to calculated STAT - timepoints?
-### 3. calculate STAT for each patient
-### 4. select variables out for model building
-### 5. analyse against gene dose - logistic regressions / multi-variable / other ideas...  bootstrapping data etc
 
+### gender, age, smoking status, concurrent chemotherapy, radiotherapy technique, FEV1, V20 Lung and V35 Esophagus
+### smoking - never / Ex / Current
+### chemo - yes / no
+### RT technique - 3D-CRT / ARC / IMRT / Tomo / SBRT
+### consider COPD
 
+### cough, dyspnoea, pneumoitis, dysphagia, oesophagitis
 
 
 ############################################################################################
@@ -43,8 +42,8 @@ View(Treat)
 Factor <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5022.tsv", sep="\t", header=T)
 View(Factor)
 
-lungPRO <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5004.tsv", sep="\t", header=T)
-View(lungPRO)
+#lungPRO <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Lung/study/datasets/dataset5004.tsv", sep="\t", header=T)
+#View(lungPRO)
 
 ### select ID and radiotherapy start data
 radiotherapyStart <- Treat %>%
@@ -52,17 +51,13 @@ radiotherapyStart <- Treat %>%
 
 
 ### select out toxicity data of interest for STAT
-### Prostate: urinary_tract_obstruction, urinary_retention, proctitis, perforation, bowel_obstruction, bowel_fistula,bowel_stenosis, bowel_ulceration,flatus, fistula
-
 #lungPRO$L5a_q05_cough, lungPRO$L5a_q06_cough_blood, lungPRO$L5a_q04_short_breath, lungPRO$L5a_q02_problems_swallowing, lungPRO$L5a_q07_lost_appetite ,lungPRO$L5a_q03_pain_chest
-PRO <- lungPRO %>%
-  select(SubjectId, event_date, L5a_q05_cough, L5a_q06_cough_blood, L5a_q04_short_breath, L5a_q02_problems_swallowing, L5a_q07_lost_appetite, L5a_q03_pain_chest)
+lungTox <- Tox %>%
+  select(SubjectId, date, cough, dyspnoea, pneumonitis, dysphagia, esophagitis)
 
-##toxicity <- prosTox %>%
-##  select(SubjectId, date, urinary_frequency, urinary_urgency, haematuria, urinary_incontinence, diarrhoea, rectal_bleeding, management_of_sphincter_control)
 
-toxicity <- merge(PRO, radiotherapyStart, by = 'SubjectId')
-toxicity$monthStartTreat <- interval(ymd(as.Date(toxicity$radiotherapy_start_date)), ymd(as.Date(toxicity$event_date)))
+toxicity <- merge(lungTox, radiotherapyStart, by = 'SubjectId')
+toxicity$monthStartTreat <- interval(ymd(as.Date(toxicity$radiotherapy_start_date)), ymd(as.Date(toxicity$date)))
 toxicity$monthStartTreat = toxicity$monthStartTreat %/% months(1)
 
 View(toxicity)
@@ -71,8 +66,8 @@ View(toxicity)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 3 ## acute toxicity - 90 days
-minMonths = 0
+#months = 0 ## acute toxicity - 90 days
+minMonths = 3
 
 ## identify patients with baseline values
 baselineCounts <- toxicity %>%
@@ -83,47 +78,39 @@ baselineCounts <- toxicity %>%
 
 ## filter by baseline and subtract first entry
 toxicitySubtract <- toxicity %>%
-  select(SubjectId, monthStartTreat, L5a_q05_cough, L5a_q06_cough_blood, L5a_q04_short_breath, L5a_q02_problems_swallowing, L5a_q07_lost_appetite, L5a_q03_pain_chest) %>%
+  select(SubjectId, monthStartTreat, cough, dyspnoea, pneumonitis, dysphagia, esophagitis) %>%
   filter(SubjectId %in% baselineCounts$SubjectId) %>%
-  filter(monthStartTreat <= months)  %>%
   group_by(SubjectId) %>%
-  mutate(L5a_q05_cough_diff = L5a_q05_cough - first(L5a_q05_cough), 
-         L5a_q06_cough_blood_diff = L5a_q06_cough_blood - first(L5a_q06_cough_blood), 
-         L5a_q04_short_breath_diff = L5a_q04_short_breath - first(L5a_q04_short_breath), 
-         L5a_q02_problems_swallowing_diff = L5a_q02_problems_swallowing - first(L5a_q02_problems_swallowing), 
-         L5a_q07_lost_appetite_diff = L5a_q07_lost_appetite - first(L5a_q07_lost_appetite), 
-         L5a_q03_pain_chest_diff = L5a_q03_pain_chest - first(L5a_q03_pain_chest)) %>%
+  mutate(cough_diff = cough - first(cough), 
+         dyspnoea_diff = dyspnoea - first(dyspnoea), 
+         pneumonitis_diff = pneumonitis - first(pneumonitis), 
+         dysphagia_diff = dysphagia - first(dysphagia), 
+         esophagitis_diff = esophagitis - first(esophagitis)) %>%
   filter(monthStartTreat > minMonths) %>%
   summarise(maxMonths = max(monthStartTreat), 
-            maxCough = max(L5a_q05_cough_diff), 
-            maxCoughBlood = max(L5a_q06_cough_blood_diff), 
-            maxShortBreadth = max(L5a_q04_short_breath_diff), 
-            maxSwallowing = max(L5a_q02_problems_swallowing_diff), 
-            maxLostAppetite = max(L5a_q07_lost_appetite_diff), 
-            maxChestPain = max(L5a_q03_pain_chest_diff)) %>%
-  select(SubjectId, maxMonths, maxCough, maxCoughBlood, maxShortBreadth, maxSwallowing, maxLostAppetite, maxChestPain)
+            maxCough = max(cough), 
+            maxDyspnoea = max(dyspnoea), 
+            maxPneumonitis = max(pneumonitis), 
+            maxDysphagia = max(dysphagia), 
+            maxEsophagitis = max(esophagitis)) %>%
+  select(SubjectId, maxMonths, maxCough, maxDyspnoea, maxPneumonitis, maxDysphagia, maxEsophagitis)
 
 toxicitySubtract[toxicitySubtract < 0] <- 0 
 View(toxicitySubtract)
 
 
-
-### adpting from here
-
 ## patients without baseline
 toxicityNoBaseline <- toxicity %>%
   filter(!SubjectId %in% baselineCounts$SubjectId) %>%
-  filter(monthStartTreat <= months)  %>%
   filter(monthStartTreat > minMonths) %>%
   group_by(SubjectId) %>%
   summarise(maxMonths = max(monthStartTreat), 
-            maxCough = max(L5a_q05_cough), 
-            maxCoughBlood = max(L5a_q06_cough_blood), 
-            maxShortBreadth = max(L5a_q04_short_breath), 
-            maxSwallowing = max(L5a_q02_problems_swallowing), 
-            maxLostAppetite = max(L5a_q07_lost_appetite), 
-            maxChestPain = max(L5a_q03_pain_chest)) %>%
-  select(SubjectId, maxMonths, maxCough, maxCoughBlood, maxShortBreadth, maxSwallowing, maxLostAppetite, maxChestPain)
+            maxCough = max(cough), 
+            maxDyspnoea = max(dyspnoea), 
+            maxPneumonitis = max(pneumonitis), 
+            maxDysphagia = max(dysphagia), 
+            maxEsophagitis = max(esophagitis)) %>%
+  select(SubjectId, maxMonths, maxCough, maxDyspnoea, maxPneumonitis, maxDysphagia, maxEsophagitis)
 View(toxicityNoBaseline)
 
 ## join both together again
@@ -133,7 +120,7 @@ View(toxicityFiltered)
 
 ###create temp data frame to display summary stats
 toxicity_summaryStats <- toxicityFiltered %>%
-  select( maxCough, maxCoughBlood, maxShortBreadth, maxSwallowing, maxLostAppetite, maxChestPain)
+  select( maxCough, maxDyspnoea, maxPneumonitis, maxDysphagia, maxEsophagitis)
 
 stview(dfSummary(toxicity_summaryStats))
 
@@ -178,7 +165,7 @@ View(toxicityFilteredSTAT)
 summary(toxicityFilteredSTAT$STAT)
 
 ggplot(data=toxicityFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,3, by = 0.3),
+  geom_histogram(breaks=seq(-1,3, by = 0.2),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
@@ -246,6 +233,9 @@ STAT_prs <- merge(STAT_prs, toxicityFilteredSTAT, by = "SubjectId")
 View(STAT_prs)
 
 
+t <- glm(STAT~prs_precentile_alan, data = STAT_prs)
+STAT_prs$prs_precentile_alan <- STAT_prs$prs_alan > quantile(STAT_prs$prs_alan, c(.95)) 
+summary(t)
 
 ##########################################################################################
 ### need to select other patient factors
@@ -253,13 +243,20 @@ View(STAT_prs)
 ### + diabetes? 
 ### BED for acute tox - 3 also try 10 for normal tissue???
 
+patFEV <- Tox %>%
+  select(SubjectId, date, fev1_litres) %>%
+  na.omit() %>%
+  group_by(SubjectId) %>%
+  mutate(fev = first(fev1_litres)) %>%
+  filter(row_number()==1) %>%
+  select(SubjectId, fev)
+
 
 patFactors <- Factor %>%
-  select(SubjectId, age_at_radiotherapy_start_yrs, smoker, diabetes, ra)
+  select(SubjectId, gender, age_at_radiotherapy_start_yrs, smoker, diabetes, ra, copd)
 
-############### NNED TO DEFINE VARIABLES FOR LUNG - CHECK PAPER
 patTreat <- Treat %>%
-  select( SubjectId, radiotherapy_number_of_fractions, radiotherapy_total_dose_Gy) ##, p3radical_prostatectomy, p3hormone_therapy, p3hormone_therapy_length_months)
+  select( SubjectId, radiotherapy_number_of_fractions, radiotherapy_total_dose_Gy, chemotherapy, radiotherapy_technique, radiotherapy_v20_lung_pc, radiotherapy_v35_oesophagus_pc) ##, p3radical_prostatectomy, p3hormone_therapy, p3hormone_therapy_length_months)
 
 
 ### need to calculate the BED prescribed
@@ -272,6 +269,8 @@ patTreat$doseBED <-   patTreat$radiotherapy_total_dose_Gy  * (1 + (patTreat$dose
 
 STAT_prs_factors <- merge(STAT_prs, patFactors, by = "SubjectId")
 STAT_prs_factors <- merge(STAT_prs_factors, patTreat, by = "SubjectId")
+STAT_prs_factors <- merge(STAT_prs_factors, patFEV, by = "SubjectId")
+
 
 ### clean the data
 #STAT_prs_factors <- STAT_prs_factors %>%
@@ -291,28 +290,62 @@ summary(t)
 t <- glm(STAT~wprs_alan, data = STAT_prs_factors)
 summary(t)
 
-## + ra
-t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + doseBED, data = STAT_prs_factors)
-summary(t) 
-t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + doseBED, data = STAT_prs_factors)
-summary(t) 
-
-
-STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.95)) 
+STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.80)) 
 t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 
-t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
-summary(t) 
-
-
-
-STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.95)) 
+STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.90)) 
 t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 
-t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+
+t <- glm(STAT~prs_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc, data = STAT_prs_factors)
 summary(t) 
+t <- glm(STAT~wprs_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc, data = STAT_prs_factors)
+summary(t) 
+
+t <- glm(STAT~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc, data = STAT_prs_factors)
+summary(t) 
+t <- glm(STAT~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc, data = STAT_prs_factors)
+summary(t) 
+
+
+t <- glm(STAT~prs_precentile_alan + gender + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc + factor(copd), data = STAT_prs_factors)
+summary(t) 
+
+
+
+
+t <- glm(STAT~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+
+
+
+t <- glm(maxCough~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxDyspnoea~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxPneumonitis~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxDysphagia~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxEsophagitis~prs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+
+
+
+t <- glm(maxCough~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxDyspnoea~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxPneumonitis~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxDysphagia~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+t <- glm(maxEsophagitis~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + factor(radiotherapy_technique) + fev + doseBED + factor(copd), data = STAT_prs_factors)
+summary(t) 
+
+
 
 
 

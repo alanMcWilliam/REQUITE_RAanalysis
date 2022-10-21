@@ -184,7 +184,7 @@ ggplot(data=toxicityFilteredSTAT, aes(log10(STAT))) +
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all2.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -194,7 +194,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 #View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all2.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -246,6 +246,8 @@ patFactors <- prosFactor %>%
 patTreat <- prosTreat %>%
   select( SubjectId, p3radio_number_fractions, p3radio_externalbeam_dose_Gy, p3radical_prostatectomy, p3hormone_therapy, p3hormone_therapy_length_months)
 
+tmp <- patTreat %>%
+  filter()
 
 ### need to calculate the BED prescribed
 ### BED = D x (1 + [d / (??/??)])
