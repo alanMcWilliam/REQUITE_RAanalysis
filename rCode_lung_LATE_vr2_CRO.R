@@ -373,7 +373,7 @@ ggplot(STAT_prs_factors, aes(x = ra, y = wprs_alan)) +
 ##########################################################################################
 ##### work with residuals
 
-t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+t2 <- glm(STAT~ age_at_radiotherapy_start_yrs + diabetes +  doseBED, data = STAT_prs_factors)
 summary(t2) 
 AIC(t2)
 
@@ -626,30 +626,3 @@ ggplot(STAT_prs_factors, aes(x = Country, y = prs)) +
 
 
 
-
-#############################
-sarahList <- read.csv("C:\\Users\\alan_\\Desktop\\RAanalysis\\listSarah\\REQUITE_prostate_STATacute_for_Alan.txt", sep = '\t')
-View(sarahList)
-colnames(sarahList)
-colnames(sarahList) <- c("SubjectId", "array_id", "stat_acute", "rstat_acute")
-colnames(sarahList)
-colnames(STAT_prs_factors)
-View(STAT_prs_factors)
-STATcomp <- merge(STAT_prs_factors, sarahList, by = 'SubjectId')
-STATcomp <- merge(toxicityFilteredSTAT, sarahList, by = 'SubjectId')
-
-View(STATcomp)
-
-STATcomp$STATdiff <- STATcomp$STAT - STATcomp$stat_acute
-summary(STATcomp$STATdiff)
-View(STATcomp)
-
-ttt <- glm(STAT~wprs, data = STATcomp)
-summary(ttt)
-ttt <- glm(stat_acute~wprs, data = STATcomp)
-summary(ttt)
-
-ttt <- glm(STAT~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STATcomp)
-summary(ttt) 
-ttt <- glm(stat_acute~wprs + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STATcomp)
-summary(ttt) 

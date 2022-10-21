@@ -26,6 +26,7 @@ use current and new snps in analysis
   residuals
   individual toxicity end-points
 
+Try STAT for rectum or bladder tox individually
 
 Breast and Lung - need full genomic data
 

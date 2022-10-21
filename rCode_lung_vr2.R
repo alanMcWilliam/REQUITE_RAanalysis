@@ -18,6 +18,7 @@
 ### 5. analyse against gene dose - logistic regressions / multi-variable / other ideas...  bootstrapping data etc
 
 
+### gender, age, smoking status, concurrent chemotherapy, radiotherapy technique, FEV1, V20 Lung and V35 Esophagus
 
 
 ############################################################################################
@@ -52,8 +53,6 @@ radiotherapyStart <- Treat %>%
 
 
 ### select out toxicity data of interest for STAT
-### Prostate: urinary_tract_obstruction, urinary_retention, proctitis, perforation, bowel_obstruction, bowel_fistula,bowel_stenosis, bowel_ulceration,flatus, fistula
-
 #lungPRO$L5a_q05_cough, lungPRO$L5a_q06_cough_blood, lungPRO$L5a_q04_short_breath, lungPRO$L5a_q02_problems_swallowing, lungPRO$L5a_q07_lost_appetite ,lungPRO$L5a_q03_pain_chest
 PRO <- lungPRO %>%
   select(SubjectId, event_date, L5a_q05_cough, L5a_q06_cough_blood, L5a_q04_short_breath, L5a_q02_problems_swallowing, L5a_q07_lost_appetite, L5a_q03_pain_chest)

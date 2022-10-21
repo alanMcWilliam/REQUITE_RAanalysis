@@ -55,7 +55,7 @@ View(toxicityCRO)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-minMonths = 0
+minMonths = 3
 
 ######################################################################
 ###  CRO
