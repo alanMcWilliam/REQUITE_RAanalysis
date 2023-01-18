@@ -273,7 +273,7 @@ STAT_prs_factors <- merge(STAT_prs_factors, patTreat, by = "SubjectId")
 View(STAT_prs_factors)
 
 view(dfSummary(STAT_prs_factors))
-
+write.csv(STAT_prs_factors, "C:/Users/alan_/Desktop/test.csv")
 
 ##########################################################################################
 ### analysing PRS and wPRS

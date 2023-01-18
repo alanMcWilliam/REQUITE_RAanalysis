@@ -77,7 +77,7 @@ View(toxicity)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 3 ## acute toxicity - 90 days
+months = 50 #3 ## acute toxicity - 90 days
 minMonths = 0
 
 ## identify patients with baseline values
@@ -246,8 +246,8 @@ patFactors <- prosFactor %>%
 patTreat <- prosTreat %>%
   select( SubjectId, p3radio_number_fractions, p3radio_externalbeam_dose_Gy, p3radical_prostatectomy, p3hormone_therapy, p3hormone_therapy_length_months)
 
-tmp <- patTreat %>%
-  filter()
+#tmp <- patTreat %>%
+ # filter()
 
 ### need to calculate the BED prescribed
 ### BED = D x (1 + [d / (??/??)])
@@ -259,6 +259,10 @@ patTreat$doseBED <-   patTreat$p3radio_externalbeam_dose_Gy  * (1 + (patTreat$do
 
 STAT_prs_factors <- merge(STAT_prs, patFactors, by = "SubjectId")
 STAT_prs_factors <- merge(STAT_prs_factors, patTreat, by = "SubjectId")
+
+patCharct <- merge(patFactors, patTreat, by = "SubjectId")
+view(dfSummary(patCharct))
+
 
 ### clean the data
 STAT_prs_factors <- STAT_prs_factors %>%
