@@ -24,15 +24,15 @@ library(ggpubr)
 
 ### read in prostate toxicities
 ### also need to know data of radiotherapy
-prosTox <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5011.tsv", sep="\t", header=T )
+prosTox <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5011.tsv", sep="\t", header=T )
 View(prosTox)
-prosTreat <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5009.tsv", sep="\t", header=T)
+prosTreat <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5009.tsv", sep="\t", header=T)
 View(prosTreat)
-prosFactor <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5010.tsv", sep="\t", header=T)
+prosFactor <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5010.tsv", sep="\t", header=T)
 View(prosFactor)
 
 
-prosPRO <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5003.tsv", sep="\t", header=T)
+prosPRO <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5003.tsv", sep="\t", header=T)
 View(prosPRO)
 
 ### select ID and radiotherapy start data
@@ -150,7 +150,7 @@ ggsave("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/processed/figures/STATpr
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/PRS_all2.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all2.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -160,7 +160,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/rheumotology/calcPRS/wPRS_all2.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all2.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -188,7 +188,7 @@ ggplot(data = PRS_all) +
 
 
 ## need to link back to patientID
-sampleIDlink <- read.csv("C:/Users/alan_/Desktop/rheumotology/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
+sampleIDlink <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5039.tsv", sep="\t", header=T)
 
 CRO_STAT_prs <- merge(PRS_all, sampleIDlink, by = "SampleID")
 CRO_STAT_prs <- merge(CRO_STAT_prs, toxicityCROFilteredSTAT, by = "SubjectId")

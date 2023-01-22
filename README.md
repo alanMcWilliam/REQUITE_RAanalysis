@@ -36,3 +36,30 @@ variable selection for REQUTE data
 
 --------------------------------
 need to remove patients with higher toxicity at baseline >= 2 - check this against notes!
+
+
+
+
+------------------------------------
+Breast patients
+Age
+Smoker - Y/N
+Chemotherapy - Y/N
+Cardiovascular disease - Y/N
+BMI
+Breast volume (cm3)
+Diabetes - Y/N
+Post op breast infection -Y/N
+Breast boost - Y/N
+Breast size - Small / medium / large
+
+Toxicity list to calculate STAT
+  Telangiectasia
+  Oedema
+  Shrinkage
+  Induration
+  Pigmentation
+  Pain
+  Oversensitivity
+
+
