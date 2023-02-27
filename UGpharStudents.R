@@ -17,12 +17,17 @@ View(prosFactor)
 colnames(prosFactor)
 
 prostatePharmacy <- prosFactor %>%
-  select(ace_inhibitor, beta_blocker, other_antihypertensive_drug, on_statin, other_lipid_lowering_drugs, antidiabetic, pde5_inhibitor, sildenafil, X5alpha_reductase_inhibitor, alpha_blocker, anti_muscarinic, amiodarone, analgesics, antidepressant) %>%
+  select(SubjectId, ace_inhibitor, beta_blocker, other_antihypertensive_drug, on_statin, other_lipid_lowering_drugs, antidiabetic, pde5_inhibitor, sildenafil, X5alpha_reductase_inhibitor, alpha_blocker, anti_muscarinic, amiodarone, analgesics, antidepressant) %>%
   mutate(across(where(is.integer), as.factor))
 summary(prostatePharmacy)
+View(prostatePharmacy)
 
 t <- summary(prostatePharmacy)
 view(dfSummary(prostatePharmacy))
+
+View(toxicityFiltered)
+
+test <- merge(prostatePharmacy, toxicityFiltered, by = 'SubjectId')
 
 tmp <- t(t)
 knitr::kable(tmp)
@@ -70,3 +75,5 @@ view(dfSummary(lungComrob))
 
 tmp <- t(t)
 knitr::kable(tmp)
+
+write.csv(test, "C:/Users/alan_/Desktop/REQUITE_polypharmacyData/test.csv")

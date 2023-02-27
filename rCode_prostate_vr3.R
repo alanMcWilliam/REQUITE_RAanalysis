@@ -60,9 +60,9 @@ radiotherapyStart <- prosTreat %>%
 ### select out toxicity data of interest for STAT
 ### Prostate: urinary_tract_obstruction, urinary_retention, proctitis, perforation, bowel_obstruction, bowel_fistula,bowel_stenosis, bowel_ulceration,flatus, fistula
 
+##acute
 PRO <- prosPRO %>%
   select(SubjectId, event_date, P5a_q07_urinary_frequency, P5a_q13_urine_night, P5a_q06_urgency_urine, P5a_q14a_blood_urine, P5a_q12_bladder_control, P5a_q08_urinary_flow, P5a_q03_pain_urine, P5a_q14b_med_blood_bowels, P5a_q11_bowel_control, P5a_q09_diarrhoea, P5a_q04_urgency_bowels, P5a_q05_urgency_bowels_unable, P5a_q02_pain_open_bowels, P5a_q15_sticky_slimy_motions, P5a_q10_constipation)
-
 
 ##toxicity <- prosTox %>%
 ##  select(SubjectId, date, urinary_frequency, urinary_urgency, haematuria, urinary_incontinence, diarrhoea, rectal_bleeding, management_of_sphincter_control)
@@ -77,7 +77,7 @@ View(toxicity)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 50 #3 ## acute toxicity - 90 days
+months = 3 ## acute toxicity - 90 days
 minMonths = 0
 
 ## identify patients with baseline values
@@ -279,34 +279,619 @@ view(dfSummary(STAT_prs_factors))
 
 t <- glm(STAT~prs_alan, data = STAT_prs_factors)
 summary(t)
+confint(t, level = 0.95)
 t <- glm(STAT~wprs_alan, data = STAT_prs_factors)
 summary(t)
+confint(t, level = 0.95)
 
 ## + ra
-t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+t <- glm(STAT~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra,  data = STAT_prs_factors)
 summary(t) 
-t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+confint(t, level = 0.95)
+t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
 summary(t) 
-
+confint(t, level = 0.95)
 
 STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.95)) 
 t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors)
 summary(t)
-
-t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+confint(t, level = 0.95)
+t <- glm(STAT~prs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
 summary(t) 
+confint(t, level = 0.95)
 
 
 
-STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.85)) 
+STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.95)) 
 t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors)
 summary(t)
-
-t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED, data = STAT_prs_factors)
+confint(t, level = 0.95)
+t <- glm(STAT~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
 summary(t) 
+confint(t, level = 0.95)
 
 
 
+################################################################################################
+##[1] "maxUrinaryFrequency"                     
+#prs
+tt1 <- glm(maxUrinaryFrequency~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxUrinaryFrequency~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxUrinaryFrequency~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxUrinaryFrequency~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+
+##"maxNocturia"                     
+#prs
+tt1 <- glm(maxNocturia~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxNocturia~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxNocturia~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxNocturia~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+##"maxUrinaryUrgency"               
+#prs
+tt1 <- glm(maxUrinaryUrgency~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxUrinaryUrgency~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxUrinaryUrgency~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxUrinaryUrgency~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+##[4] "maxHematuria"                    
+#prs
+tt1 <- glm(maxHematuria~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxHematuria~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxHematuria~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxHematuria~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+
+## "maxUrinaryIncontenence"           
+#prs
+tt1 <- glm(maxUrinaryIncontenence~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxUrinaryIncontenence~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxUrinaryIncontenence~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxUrinaryIncontenence~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+
+
+##"maxDecreasedUrinaryStream"       
+#prs
+tt1 <- glm(maxDecreasedUrinaryStream~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxDecreasedUrinaryStream~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxDecreasedUrinaryStream~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxDecreasedUrinaryStream~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+
+##[7] "maxDysuria"                      
+#prs
+tt1 <- glm(maxDysuria~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxDysuria~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxDysuria~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxDysuria~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+## "maxGastrointenstinalIncontenence" 
+#prs
+tt1 <- glm(maxGastrointenstinalIncontenence~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxGastrointenstinalIncontenence~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxGastrointenstinalIncontenence~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxGastrointenstinalIncontenence~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+## "maxDiarrhoea"  
+
+#prs
+tt1 <- glm(maxDiarrhoea~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxDiarrhoea~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxDiarrhoea~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxDiarrhoea~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+## maxGastrointenstinalUrgency
+#prs
+tt1 <- glm(maxGastrointenstinalUrgency~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxGastrointenstinalUrgency~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxGastrointenstinalUrgency~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxGastrointenstinalUrgency~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+## "maxTenesmus"                     
+#prs
+tt1 <- glm(maxTenesmus~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxTenesmus~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxTenesmus~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxTenesmus~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+##"maxGastrointestinalPain"         
+#prs
+tt1 <- glm(maxGastrointestinalPain~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxGastrointestinalPain~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxGastrointestinalPain~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxGastrointestinalPain~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+##[13] "maxRectalMucus"                  
+#prs
+tt1 <- glm(maxRectalMucus~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxRectalMucus~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxRectalMucus~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxRectalMucus~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+##"maxConstipation"   
+#prs
+tt1 <- glm(maxConstipation~prs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs
+tt1 <- glm(maxConstipation~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
+
+#prs percentile
+tt1 <- glm(maxConstipation~prs_percentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa1<- paste('(',a1,')', sep = '')
+aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+
+#wprs percentile
+tt1 <- glm(maxConstipation~wprs_precentile_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_prostatectomy + p3hormone_therapy + doseBED + ra, data = STAT_prs_factors)
+summary(tt1) 
+ttt1 <- confint(tt1, level = 0.95)
+a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
+aa2<- paste('(',a2,')', sep = '')
+aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
+
+aaa1
+aaa2
 
 ##########################################################################################
 ##########################################################################################
@@ -475,7 +1060,7 @@ for (i in 1:length(toxEndPoints)) {
   tmp <- paste("factor(",toxEndPoints[i],")")
   formula<-as.formula( paste(tmp, paste( "prs_alan" ), sep=" ~ " ) )
   print(formula)
-  model<-glm(formula, family=binomial(link='logit'), data=STAT_residuals_geneDose)
+  model<-glm(formula, family=binomial(link='logit'), data=STAT_prs_factors)
   #print(model)
   model_stats_toxPRS[i,1]<-as.numeric(coef(model)[2])#beta
   #print(model_stats_toxPRS[i,1])
