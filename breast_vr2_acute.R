@@ -45,7 +45,7 @@ radiotherapyStart <- Treat %>%
 ## breast_erythema, breast_skin_ulceration -- ACUTE
 #Telangiectasia, Oedema, atrophy, Induration,shrinkage Pigmentation, 
 toxicity <- Tox %>%
-  select(SubjectId, date, breast_telangiectasia_outside_tumour_bed, breast_skin_induration_outside_tumour_bed, breast_skin_hyperpigmentation, breast_atrophy, breast_oedema)
+  select(SubjectId, date, breast_erythema, breast_skin_ulceration )
 
 toxicity <- merge(Tox, radiotherapyStart, by = 'SubjectId')
 toxicity$monthStartTreat <- interval(ymd(as.Date(toxicity$b3radio_breast_startdate)), ymd(as.Date(toxicity$date)))
@@ -54,8 +54,8 @@ toxicity$monthStartTreat = toxicity$monthStartTreat %/% months(1)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 500 ## acute toxicity - 90 days acute set 
-minMonths = 3
+months = 4 ## acute toxicity - 90 days acute set 
+minMonths = 0
 
 ## identify patients with baseline values
 baselineCounts <- toxicity %>%
@@ -66,23 +66,17 @@ baselineCounts <- toxicity %>%
 
 ## filter by baseline and subtract first entry
 toxicitySubtract <- toxicity %>%
-  select(SubjectId, monthStartTreat, breast_telangiectasia_outside_tumour_bed, breast_skin_induration_outside_tumour_bed, breast_skin_hyperpigmentation, breast_atrophy, breast_oedema) %>%
+  select(SubjectId, monthStartTreat, breast_erythema, breast_skin_ulceration ) %>%
   filter(SubjectId %in% baselineCounts$SubjectId) %>%
   group_by(SubjectId) %>%
-  mutate(telangiectasia_diff = breast_telangiectasia_outside_tumour_bed - first(breast_telangiectasia_outside_tumour_bed), 
-         induration_diff = breast_skin_induration_outside_tumour_bed - first(breast_skin_induration_outside_tumour_bed), 
-         pigmentation_diff = breast_skin_hyperpigmentation - first(breast_skin_hyperpigmentation), 
-         atrophy_diff = breast_atrophy - first(breast_atrophy),
-         oedema_diff = breast_oedema - first(breast_oedema)) %>%
+  mutate(erythema_diff = breast_erythema - first(breast_erythema), 
+         ulceration_diff = breast_skin_ulceration - first(breast_skin_ulceration)) %>%
   filter(monthStartTreat > minMonths) %>%
   filter(monthStartTreat < months) %>%
   summarise(maxMonths = max(monthStartTreat), 
-            maxTelangiectasia = max(telangiectasia_diff), 
-            maxInduration = max(induration_diff), 
-            maxPigmentation = max(pigmentation_diff), 
-            maxAtrophy = max(atrophy_diff),
-            maxOedema = max(oedema_diff)) %>%
-  select(SubjectId, maxMonths, maxTelangiectasia, maxInduration, maxPigmentation, maxAtrophy, maxOedema)
+            maxErythema = max(erythema_diff), 
+            maxUlceration = max(ulceration_diff)) %>%
+  select(SubjectId, maxMonths, maxErythema, maxUlceration)
 
 toxicitySubtract[toxicitySubtract < 0] <- 0 
 View(toxicitySubtract)
@@ -95,12 +89,9 @@ toxicityNoBaseline <- toxicity %>%
   filter(monthStartTreat < months) %>%
   group_by(SubjectId) %>%
   summarise(maxMonths = max(monthStartTreat), 
-            maxTelangiectasia = max(breast_telangiectasia_outside_tumour_bed), 
-            maxInduration = max(breast_skin_induration_outside_tumour_bed), 
-            maxPigmentation = max(breast_skin_hyperpigmentation), 
-            maxAtrophy = max(breast_atrophy),
-            maxOedema = max(breast_oedema)) %>%
-  select(SubjectId, maxMonths, maxTelangiectasia, maxInduration, maxPigmentation, maxAtrophy, maxOedema)
+            maxErythema = max(breast_erythema), 
+            maxUlceration = max(breast_skin_ulceration)) %>%
+  select(SubjectId, maxMonths, maxErythema, maxUlceration)
 
 
 ## join both together again
@@ -110,7 +101,7 @@ View(toxicityFiltered)
 
 ###create temp data frame to display summary stats
 toxicity_summaryStats <- toxicityFiltered %>%
-  select(maxTelangiectasia, maxInduration, maxPigmentation, maxAtrophy, maxOedema)
+  select(maxErythema, maxUlceration)
 
 stview(dfSummary(toxicity_summaryStats))
 
@@ -157,7 +148,7 @@ View(toxicityFilteredSTAT)
 summary(toxicityFilteredSTAT$STAT)
 
 ggplot(data=toxicityFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,3, by = 0.25),
+  geom_histogram(breaks=seq(-1,4, by = 0.5),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
@@ -198,7 +189,7 @@ alanWPRS$wprs_alan <- as.numeric(alanWPRS$wprs_alan)
 #View(alanWPRS)
 
 PRS_all <- merge(alanPRS, alanWPRS, by = "SampleID")
-View(PRS_all)
+#View(PRS_all)
 
 ggplot(data = PRS_all) +
   geom_histogram(aes(x = prs_alan), 
@@ -247,7 +238,9 @@ patInfo <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Breast/study/
 #View(patInfo)
 
 patTreat <- Treat %>%
-  select( SubjectId, b3radio_breast_fractions, b3radio_breast_dose_Gy, b3chemo_adjuvant, b3chemo_neo_adjuvant, b3radio_boost, b3post_operative_infection, b3radio_breast_ct_volume_cm3 ) 
+  select( SubjectId, b3radio_breast_fractions, b3radio_breast_dose_Gy, b3chemo_adjuvant, b3chemo_neo_adjuvant, b3radio_boost, b3radio_boost_type, b3post_operative_infection, b3radio_breast_ct_volume_cm3 ) 
+
+patTreat$b3radio_boost_type[patTreat$b3radio_boost_type != 1] <- 0
 
 patDetail <- patInfo %>%
   select(SubjectId, age_at_radiotherapy_start_yrs, smoker, height_cm, weight_at_cancer_diagnosis_kg, history_of_heart_disease, ra, diabetes)
@@ -271,7 +264,7 @@ STAT_prs_factors <- merge(STAT_prs_factors, patDetail, by = "SubjectId")
 STAT_prs_factors$chemo = STAT_prs_factors$b3chemo_adjuvant + STAT_prs_factors$b3chemo_neo_adjuvant
 STAT_prs_factors$chemo[STAT_prs_factors$chemo > 0 ] <- 1
 
-
+summary(factor(STAT_prs_factors$b3radio_boost_type))
 
 View(STAT_prs_factors)
 
@@ -320,9 +313,9 @@ confint(t)
 
 ##### individual endpoints
 
-## maxTelangiectasia, 
+## maxErythema, , 
 #prs
-tt1 <- glm(maxTelangiectasia~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxErythema~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -331,7 +324,7 @@ aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 
 
 #wprs
-tt1 <-glm(maxTelangiectasia~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <-glm(maxErythema~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -342,7 +335,7 @@ aaa1
 aaa2
 
 #prs percentile
-tt1 <- glm(maxTelangiectasia~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxErythema~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -351,7 +344,7 @@ aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 
 
 #wprs percentile
-tt1 <- glm(maxTelangiectasia~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxErythema~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -361,9 +354,9 @@ aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 aaa1
 aaa2
 
-## maxInduration, 
+## maxUlceration, 
 #prs
-tt1 <- glm(maxInduration~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxUlceration~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -372,7 +365,7 @@ aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 
 
 #wprs
-tt1 <-glm(maxInduration~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <-glm(maxUlceration~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -383,7 +376,7 @@ aaa1
 aaa2
 
 #prs percentile
-tt1 <- glm(maxInduration~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxUlceration~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -392,7 +385,7 @@ aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 
 
 #wprs percentile
-tt1 <- glm(maxInduration~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
+tt1 <- glm(maxUlceration~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
 summary(tt1) 
 ttt1 <- confint(tt1, level = 0.95)
 a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
@@ -401,132 +394,6 @@ aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), a
 
 aaa1
 aaa2
-
-##maxPigmentation, 
-#prs
-tt1 <- glm(maxPigmentation~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs
-tt1 <-glm(maxPigmentation~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-#prs percentile
-tt1 <- glm(maxPigmentation~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs percentile
-tt1 <- glm(maxPigmentation~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-##maxAtrophy, 
-#prs
-tt1 <- glm(maxAtrophy~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs
-tt1 <-glm(maxAtrophy~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-#prs percentile
-tt1 <- glm(maxAtrophy~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs percentile
-tt1 <- glm(maxAtrophy~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-## maxOedema
-
-#prs
-tt1 <- glm(maxOedema~prs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs
-tt1 <-glm(maxOedema~wprs_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-#prs percentile
-tt1 <- glm(maxOedema~prs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa1<- paste('(',a1,')', sep = '')
-aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-
-#wprs percentile
-tt1 <- glm(maxOedema~wprs_precentile_alan + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemo) + factor(history_of_heart_disease) + BMI + b3radio_breast_ct_volume_cm3 + doseBED +  factor(b3radio_boost) + factor(b3post_operative_infection) + factor(diabetes) + factor(ra), data = STAT_prs_factors)
-summary(tt1) 
-ttt1 <- confint(tt1, level = 0.95)
-a2 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
-aa2<- paste('(',a2,')', sep = '')
-aaa2 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa2, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
-aaa1
-aaa2
-
-
 
 
 
