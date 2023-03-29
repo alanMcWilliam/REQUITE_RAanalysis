@@ -262,8 +262,9 @@ patFEV <- Tox %>%
   group_by(SubjectId) %>%
   mutate(fev = first(fev1_litres)) %>%
   filter(row_number()==1) %>%
+  filter(fev <100)
   select(SubjectId, fev)
-
+summary(patFEV)
 
 patFactors <- Factor %>%
   select(SubjectId, gender, age_at_radiotherapy_start_yrs, smoker, diabetes, ra, copd)
@@ -378,7 +379,6 @@ ttt1 <- confint(tt1, level = 0.95)
 a1 <- paste(format(round(ttt1[2,1], 3), nsmall = 3), format(round(ttt1[2,2], 3), nsmall = 3), sep=', ')
 aa1<- paste('(',a1,')', sep = '')
 aaa1 <- paste(format(round(as.numeric(summary(tt1)$coeff[2]), 3), nsmall = 3), aa1, format(round(summary(tt1)$coeff[2,4], 2), nsmall = 2), sep = ' ')
-
 
 #wprs percentile
 tt1 <- glm(maxCough~wprs_precentile_alan + factor(gender) + age_at_radiotherapy_start_yrs + factor(smoker) + factor(chemotherapy) + fev + radiotherapy_v20_lung_pc + radiotherapy_v35_oesophagus_pc + doseBED + factor(copd), data = STAT_prs_factors)

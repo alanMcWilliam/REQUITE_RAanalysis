@@ -149,6 +149,7 @@ toxicityFilteredSTAT <- bind_cols(toxicityFiltered, t(as.data.frame(STAT)))
 names(toxicityFilteredSTAT)[ncol(toxicityFilteredSTAT)] <- "STAT"
 View(toxicityFilteredSTAT)
 
+#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/prostateAcute.csv")
 ### select other clinical variables for inclusion in analysis
 
 
@@ -1011,9 +1012,10 @@ snpNames
 
 
 ## join geneDose with residuals
-STAT_residuals_geneDose <- merge(STAT_residuals, genedose, by = "SampleID")
+STAT_residuals_geneDose <- merge(PRO_STAT_prs_factors, genedose, by = "SampleID")
 View(STAT_residuals_geneDose)
 
+write.csv(STAT_residuals_geneDose, "C:/Users/alan_/Desktop/prostateGeneDose.csv")
 
 
 model_stats<-matrix(ncol=6,nrow=length(snpNames))

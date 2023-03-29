@@ -141,6 +141,7 @@ names(toxicityFilteredSTAT)[ncol(toxicityFilteredSTAT)] <- "STAT"
 
 #toxicityFilteredSTAT <- toxicityFilteredSTAT[!is.nan(toxicityFilteredSTAT$STAT), ]
 View(toxicityFilteredSTAT)
+write.csv(toxicityFiltered, "C:/Users/alan_/Desktop/breastLate.csv")
 
 ### select other clinical variables for inclusion in analysis
 

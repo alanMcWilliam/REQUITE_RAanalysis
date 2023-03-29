@@ -125,6 +125,7 @@ names(toxicityPROFilteredSTAT)[ncol(toxicityPROFilteredSTAT)] <- "STAT"
 View(toxicityPROFilteredSTAT)
 
 
+#write.csv(toxicityPROFilteredSTAT, "C:/Users/alan_/Desktop/prostateLate.csv")
 
 
 ### save csv of data wkith STAT ready for analysis.
