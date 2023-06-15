@@ -140,7 +140,7 @@ View(toxicityPROFilteredSTAT)
 summary(toxicityPROFilteredSTAT$STAT)
 
 ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) + 
-  geom_histogram(breaks=seq(-1,3, by = 0.2),
+  geom_histogram(breaks=seq(-1,4, by = 0.2),
                  col = "skyblue", fill = "lightblue") +
   labs(title = i, x = "STAT" ) +
   theme(panel.background = element_blank())
@@ -153,7 +153,7 @@ ggplot(data=toxicityPROFilteredSTAT, aes(STAT)) +
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all_NEW.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -163,7 +163,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 #View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_NEW.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
