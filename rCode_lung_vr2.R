@@ -75,7 +75,7 @@ View(toxicity)
 
 ### need to set a time point for selecting highest toxicity score and filter
 ### keep highest recorded score for each toxicity 
-months = 500 ## acute toxicity - 90 days acute set months = 4 minMonths = 1
+months = 500 ## acute toxicity - 90 days acute set months = 4 minMonths = 1  late 500 (big number) min months 3
 minMonths = 3
 
 ## identify patients with baseline values
@@ -167,8 +167,8 @@ View(toxicityFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
-#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/prostate_acuteSTAT.csv")
-
+write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/lung_acuteSTAT.csv")
+#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/lung_lateSTAT.csv")
 
 ############################################################################################
 ### summary of patient characteristics
@@ -198,7 +198,7 @@ ggplot(data=toxicityFilteredSTAT, aes(STAT)) +
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all_NEW.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -208,7 +208,7 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 #View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_NEW.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -262,7 +262,7 @@ patFEV <- Tox %>%
   group_by(SubjectId) %>%
   mutate(fev = first(fev1_litres)) %>%
   filter(row_number()==1) %>%
-  filter(fev <100)
+  filter(fev <100) %>%
   select(SubjectId, fev)
 summary(patFEV)
 

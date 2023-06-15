@@ -49,6 +49,7 @@ prosFactor <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/s
 View(prosFactor)
 
 
+
 prosPRO <- read.csv("C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/Prostate/study/datasets/dataset5003.tsv", sep="\t", header=T)
 View(prosPRO)
 
@@ -154,7 +155,7 @@ View(toxicityFilteredSTAT)
 
 
 ### save csv of data wkith STAT ready for analysis.
-#write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/prostate_acuteSTAT.csv")
+write.csv(toxicityFilteredSTAT, "C:/Users/alan_/Desktop/RAanalysis/REQUITEdata/processed/prostate_acuteSTAT.csv")
 
 
 ############################################################################################
@@ -185,7 +186,8 @@ ggplot(data=toxicityFilteredSTAT, aes(log10(STAT))) +
 ##########################################################################################
 ### load in PRS + wPRS
 
-alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all.csv", header = F)
+##alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all.csv", header = F)
+alanPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/PRS_all_NEW.csv", header = F)
 alanPRS <- t(alanPRS)
 alanPRS <- alanPRS[-1,]
 
@@ -195,7 +197,8 @@ alanPRS$SampleID <- as.numeric(alanPRS$SampleID)
 alanPRS$prs_alan <- as.numeric(alanPRS$prs_alan)
 #View(alanPRS)
 
-alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all.csv", header = F)
+##alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_all.csv", header = F)
+alanWPRS <- read.csv("C:/Users/alan_/Desktop/RAanalysis/calcPRS/wPRS_NEW.csv", header = F)
 alanWPRS <- t(alanWPRS)
 alanWPRS <- alanWPRS[-1,]
 
@@ -293,7 +296,7 @@ t <- glm(STAT~wprs_alan + age_at_radiotherapy_start_yrs + diabetes + p3radical_p
 summary(t) 
 confint(t, level = 0.95)
 
-STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.95)) 
+STAT_prs_factors$prs_precentile_alan <- STAT_prs_factors$prs_alan > quantile(STAT_prs_factors$prs_alan, c(.90)) 
 t <- glm(STAT~prs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
@@ -303,7 +306,7 @@ confint(t, level = 0.95)
 
 
 
-STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.95)) 
+STAT_prs_factors$wprs_precentile_alan <- STAT_prs_factors$wprs_alan > quantile(STAT_prs_factors$wprs_alan, c(.90)) 
 t <- glm(STAT~wprs_precentile_alan, data = STAT_prs_factors)
 summary(t)
 confint(t, level = 0.95)
@@ -955,6 +958,14 @@ ggplot(STAT_prs_factors, aes(x = ra, y = wprs_alan)) +
 
 
 
+ggplot(PRO_STAT_prs_factors, aes(x = factor(p3radio_number_fractions), y = p3radio_externalbeam_dose_Gy)) + 
+  geom_boxplot() + 
+  theme_classic()
+
+
+ggplot(PRO_STAT_prs_factors, aes(x = p3radio_number_fractions)) + 
+  geom_bar() + 
+  theme_classic()
 
 ##########################################################################################
 ##### work with residuals
